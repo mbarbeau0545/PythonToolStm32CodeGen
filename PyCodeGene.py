@@ -45,6 +45,9 @@ TARGET_T_STRUCT_END_LINE      ="    /* CAUTION : Automatic generated code sectio
 
 TARGET_T_INCLUDE_START = "    /* CAUTION : Automatic generated code section for Include: Start */\n"
 TARGET_T_INCLUDE_END   = "    /* CAUTION : Automatic generated code section for Include: End */\n"
+
+TARGET_T_DEFINE_START = "    /* CAUTION : Automatic generated code section for Define: Start */\n"
+TARGET_T_DEFINE_END   = "    /* CAUTION : Automatic generated code section for Define: End */\n"
 #------------------------------------------------------------------------------
 #                                       CLASS
 #------------------------------------------------------------------------------

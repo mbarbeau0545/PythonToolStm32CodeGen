@@ -194,7 +194,7 @@ class FMKCDA_CodeGen():
         #------------make define/ var for interna sensors-----------
         #-----------------------------------------------------------
         var_other_cfg   += "    /**< Variable for Interna Sensors configuration*/\n"
-        var_other_cfg   += f"    const t_sFMKCDA_HwAdcCfg c_FmkCda_HwInternalSnsCfg_as[{ENUM_ADC_INTERN_SENSOR}_NB] =" + "{\n"
+        var_other_cfg   += f"    const t_sFMKCDA_ADcInternalSnsCfg c_FmkCda_HwInternalSnsCfg_as[{ENUM_ADC_INTERN_SENSOR}_NB] =" + "{\n"
         var_other_calib += "    /**< Variable for Internal Sensors Calibration address */\n"
         var_other_calib += "    const volatile t_uint16* c_FmkCda_HwInternalSnsAddress_pas16[FMKCDA_ADC_INTERN_NB] = {\n"
         for idx, other_calib_info in enumerate(calib_astr):
@@ -203,12 +203,16 @@ class FMKCDA_CodeGen():
             var_other_calib += f"        (volatile t_uint16 *){ENUM_ADC_INTERN_SENSOR}_{other_calib_info[0]}_ADDRESS,"  \
                             + " " * (60 - len(str(f"{ENUM_ADC_INTERN_SENSOR}_{other_calib_info[0]}_ADDRESS"))) \
                             + f"// {ENUM_ADC_INTERN_SENSOR}_{enum_internal_other[idx]}\n"
-            
-            var_other_cfg += "        {" \
+            if str(other_calib_info[4]).upper() not in ['TRUE', 'FALSE']:
+                raise ValueError('Expected TRUE or FALSE, get %d', other_calib_info[4])
+            var_other_cfg += "        {" + '{' \
                         + f"{ENUM_ADC_ISCT_ROOT}_{str(other_calib_info[2])[4:]}," \
                         + " " * (SPACE_VARIABLE - len(str(other_calib_info[2]))) \
                         + f"{ENUM_ADC_CHNL_ROOT}_{str(other_calib_info[3])[12:]}" + "},"\
                         + " " * (SPACE_VARIABLE - len(str(other_calib_info[3]))) \
+                        + f"{str(other_calib_info[4]).upper()}"\
+                        + " " * (SPACE_VARIABLE - len(str(other_calib_info[4]))) \
+                        + '},'\
                         + f"// for {ENUM_ADC_INTERN_SENSOR}_{enum_internal_other[idx]}\n" 
             
         var_other_cfg  += "    };\n\n"

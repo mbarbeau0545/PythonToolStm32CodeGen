@@ -217,6 +217,9 @@ class FMKIO_CodeGen():
             sig_name = f'P{pin_ana_cfg[0][5:]}{pin_ana_cfg[1][4:]}'
             if sig_name in stm_pin_used:
                 raise GPIO_AlreadyConfgigured(f"{sig_name} has already been configured") 
+            
+            if 'ADC_1' in pin_ana_cfg[2] and pin_ana_cfg[3] in ['ADC_CHANNEL_16', 'ADC_CHANNEL_18']:
+                raise ValueError(f'For ADC_1, {pin_ana_cfg[3]} channel cannot be used cause already use for Vbat or Vreference') 
 
             sig_in_ana.append(sig_name)
             stm_pin_used.append(sig_name)

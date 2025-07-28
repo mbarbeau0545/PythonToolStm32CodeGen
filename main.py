@@ -10,7 +10,17 @@
 #------------------------------------------------------------------------------
 #                                       IMPORT
 #------------------------------------------------------------------------------
-import sys,os, json
+import sys,os
+
+# Ajoute le dossier parent (ConfigPrj) au PYTHONPATH
+current_dir = os.path.dirname(__file__)
+parent_dir = os.path.abspath(os.path.join(current_dir, '..'))  # <- on remonte d'un cran
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
+from PythonToolCfg.APP_PATH import *
+
+import json 
 from PyCodeGene import LoadConfig_FromExcel as LCFE
 
 from FMK_CodeGen.FMKCPU_CodeGen import FMKCPU_CodeGen as FMKCPU
@@ -25,6 +35,7 @@ from App_CodeGen.AppAct_CodeGen import AppAct_CodeGen as APPACT
 from App_CodeGen.AppSdm_CodeGen import AppSdm_CodeGen as APPSDM
 from App_CodeGen.AppSpm_CodeGen import AppSpm_CodeGen as APPSPM
 from App_CodeGen.AppLgc_CodeGen import AppLgc_CodeGen as APPLGC
+from App_CodeGen.AppSig_CodeGen import AppSig_CodeGen as APPSIG
 #------------------------------------------------------------------------------
 #                                       CONSTANT
 #------------------------------------------------------------------------------
@@ -51,6 +62,8 @@ def main()-> None:
         or  os.path.isfile(software_cfg_path)):
         FileNotFoundError("Expected two argument, hardware configuration and software.")
 
+    if not os.path.isfile(SYM_MSG_CFG):
+        FileNotFoundError('Did not found sym file msg configuration. please update path in APPPATH.py for SYM_MSG_CFG variable')
     print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     print('Start Python tool with')
     print(f'\tHardware Confiougration Path -> {hardware_cfg_path}')
@@ -62,7 +75,7 @@ def main()-> None:
     FMKHRT.code_generation(hardware_cfg_path)
     FMKCDA.code_genration(hardware_cfg_path)
     FMKSRL.code_genration(hardware_cfg_path)
-    #FMKIO.code_generation(hardware_cfg_path)
+    FMKIO.code_generation(hardware_cfg_path)
 
     #--- create Json file for Uds Configuration with the version ---# 
     code_gen = LCFE()
@@ -89,6 +102,7 @@ def main()-> None:
     APPACT.code_generation(software_cfg_path, soft_udscfg_path, filled_uds_file)
     APPSDM.code_generation(software_cfg_path, soft_udscfg_path, filled_uds_file)
     APPSPM.code_generation(software_cfg_path, soft_udscfg_path, filled_uds_file)
+    APPSIG.code_generation(SYM_MSG_CFG)
     APPLGC.code_generation(software_cfg_path, soft_udscfg_path, filled_uds_file)
 
     print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")

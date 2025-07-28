@@ -77,6 +77,7 @@ class AppLgc_CodeGen():
         var_depencies = ""
         var_srv_dependencies = ""
         var_depencies_value = ""
+        var_agent = ''
         uds_lgc_data = {}
         uds_lgc_data["LOGIC"] = {}
         uds_lgc_data["LOGIC"]["SERVICE"] = {}
