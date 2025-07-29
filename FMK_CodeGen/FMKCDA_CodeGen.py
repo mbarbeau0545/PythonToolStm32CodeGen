@@ -196,7 +196,7 @@ class FMKCDA_CodeGen():
         var_other_cfg   += "    /**< Variable for Interna Sensors configuration*/\n"
         var_other_cfg   += f"    const t_sFMKCDA_ADcInternalSnsCfg c_FmkCda_HwInternalSnsCfg_as[{ENUM_ADC_INTERN_SENSOR}_NB] =" + "{\n"
         var_other_calib += "    /**< Variable for Internal Sensors Calibration address */\n"
-        var_other_calib += "    const volatile t_uint16* c_FmkCda_HwInternalSnsAddress_pas16[FMKCDA_ADC_INTERN_NB] = {\n"
+        var_other_calib += "    const volatile t_uint16* c_FmkCda_HwInternalSnsAddress_pau16[FMKCDA_ADC_INTERN_NB] = {\n"
         for idx, other_calib_info in enumerate(calib_astr):
             def_other_calib += f"    #define {ENUM_ADC_INTERN_SENSOR}_{other_calib_info[0]}_ADDRESS ((volatile t_uint16*){str(other_calib_info[1])})\n"
 
