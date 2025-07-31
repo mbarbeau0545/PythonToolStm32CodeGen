@@ -249,9 +249,9 @@ class FMKCPU_CodeGen():
 
                 switch_clk_periph +=  f'            case {ENUM_FMKCPU_RCC_ROOT}_{rcc_cfg[0]}:\n' \
                                     + f'                PeriphClkCfg_s.{str(rcc_cfg[0]).capitalize()}ClockSelection = ' \
-                                    + f'RCC_PERIPHCLK_{str(rcc_cfg[0]).upper()};\n' \
+                                    + f'RCC_{str(rcc_cfg[0]).upper()}CLKSOURCE_{preiph_clk_src.upper()};\n' \
                                     + f'                //------ Reference Clock  Source {rcc_cfg[1]} ------//\n' \
-                                    + f'                PeriphClkCfg_s.PeriphClockSelection = RCC_{str(rcc_cfg[0]).upper()}CLKSOURCE_{preiph_clk_src.upper()};\n' \
+                                    + f'                PeriphClkCfg_s.PeriphClockSelection = RCC_PERIPHCLK_{str(rcc_cfg[0]).upper()};\n' \
                                     +  '                break;\n'
             else:
                 PeriphClockCfgError(f'{rcc_cfg[2]} is not allowed, only Yes or No value allowed')
@@ -406,107 +406,51 @@ class FMKCPU_CodeGen():
         #------------code genration for FMKCPU module---------------
         #-----------------------------------------------------------
         #---------------------For FMKCPU_Config Public---------------------#
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for FMFCPU Module>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("\t- For configPublic file")
 
+        print('[INFO] : FMKCPU -> Config Public Code generation')
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE,TARGET_T_ENUM_END_LINE)
-        print('\t\t- For Dma Multiplexage')
         cls.code_gen._write_into_file(enm_dmamux, FMKCPU_CONFIGPUBLIC)
-
-        print('\t\t- For Dma Channel')
-        cls.code_gen._write_into_file(enum_dma_channel, FMKCPU_CONFIGPUBLIC)
-                                      
-        print('\t\t- For Dma Controller')
+        cls.code_gen._write_into_file(enum_dma_channel, FMKCPU_CONFIGPUBLIC)                  
         cls.code_gen._write_into_file(enm_dma, FMKCPU_CONFIGPUBLIC)
-
-        print('\t\t- For Dma RqstType')
         cls.code_gen._write_into_file(enm_rqst, FMKCPU_CONFIGPUBLIC)
-        
-
-        print("\t\t- enum for NVIC available in this stm")
         cls.code_gen._write_into_file(enum_nvic, FMKCPU_CONFIGPUBLIC)
-
-        print("\t\t- enum for RCC clock available in this stm")
         cls.code_gen._write_into_file(enum_rcc, FMKCPU_CONFIGPUBLIC)
-
-        print('\t\t enum for oscillator management')
         cls.code_gen._write_into_file(enum_osc_freq, FMKCPU_CONFIGPUBLIC)
-
-        print("\t\t include for cpu")
         cls.code_gen.change_target_balise(TARGET_CPU_CFG_START,TARGET_CPU_CFG_END)
-
-
         cls.code_gen._write_into_file(include_cpu,FMKCPU_CONFIGPUBLIC)
+
         #---------------------For FMKCPU_Config Private---------------------#
-        print("\t- For configPrivate file")
+        print('[INFO] : FMKCPU -> Config Private Code generation')
         cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE, TARGET_T_VARIABLE_END_LINE)
-        
-        cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE, TARGET_T_VARIABLE_END_LINE)
-
-        print('\t\t- For Mapping Rqst Type / Dma Controller')
         cls.code_gen._write_into_file(cst_cfg, FMKCPU_CONFIGPRIVATE)
-
-        print('\t\t- For Mapping Dma Mux Rcc Mapping')
         cls.code_gen._write_into_file(cst_dmamux_mapp, FMKCPU_CONFIGPRIVATE)
-
-        print('\t\t- varriable for oscillator management')
         cls.code_gen._write_into_file(const_osc_rcc_src, FMKCPU_CONFIGPRIVATE)
-      
-
-        print("\t\t- Variable for clock state functions")
         cls.code_gen._write_into_file(var_clk_state, FMKCPU_CONFIGPRIVATE)
-
-        print("\t\t- Configuration for nvic priority")
         cls.code_gen._write_into_file(var_nvic_prio, FMKCPU_CONFIGPRIVATE)
-        print('\t\t- For Dma Info variable')
         cls.code_gen._write_into_file(var_dma_cfg, FMKCPU_CONFIGPRIVATE)
+        cls.code_gen.change_target_balise(TARGET_FMKCPU_IRQN_HANDLER_START, TARGET_FMKCPU_IRQN_HANDLER_END)
+        cls.code_gen._write_into_file(dma_irqn_hdler, FMKCPU_CONFIGPRIVATE)
 
 
         
         #---------------------For FMKCPU_Config Spec---------------------#
-        print('\t For Config Specific File')
-        cls.code_gen.change_target_balise(TARGET_VARIABLE_START_LINE, TARGET_VARIABLE_END_LINE)
-
-        print('\t\tFor IRQN Handler')
-        cls.code_gen.change_target_balise(TARGET_FMKCPU_IRQN_HANDLER_START, TARGET_FMKCPU_IRQN_HANDLER_END)
-        cls.code_gen._write_into_file(dma_irqn_hdler, FMKCPU_CONFIGPRIVATE)
-
-        print('\t\tFor Switch case for Request Dma')
+        print('[INFO] : FMKCPU -> Config Specific Code generation')
         cls.code_gen.change_target_balise(TARGET_FMKCPU_SWITCH_RQST_START, TARGET_FMKCPU_SWITCH_RQST_END)
         cls.code_gen._write_into_file(switch_rqst, FMKCPU_CONFIGSPECIFIC_C)
-
-        print("\t\t- Function for enable/disable RCC clock")
         cls.code_gen.change_target_balise(TARGET_c_clock_eNABLE_IMPL_START, TARGET_c_clock_eNABLE_IMPL_END)
         cls.code_gen._write_into_file(rcc_ena_imple, FMKCPU_CONFIGSPECIFIC_C)
-
         cls.code_gen.change_target_balise(TARGET_CLOCK_DISABLE_IMPL_START, TARGET_CLOCK_DISABLE_IMPL_END)
         cls.code_gen._write_into_file(rcc_dis_imple, FMKCPU_CONFIGSPECIFIC_C)
-
         cls.code_gen.change_target_balise(TARGET_c_clock_eNABLE_DECL_START, TARGET_c_clock_eNABLE_DECL_END)
         cls.code_gen._write_into_file(rcc_ena_decl, FMKCPU_CONFIGSPECIFIC_H)
-
         cls.code_gen.change_target_balise(TARGET_CLOCK_DISABLE_DECL_START, TARGET_CLOCK_DISABLE_DECL_END)
         cls.code_gen._write_into_file(rcc_dis_decl, FMKCPU_CONFIGSPECIFIC_H)
-
-        print("\t\t- switch case to find stm NVIC from enum")
         cls.code_gen.change_target_balise(TARGET_SWITCH_NVIC_START, TARGET_SWITCH_NVIC_END)
         cls.code_gen._write_into_file(switch_irqn, FMKCPU_CONFIGSPECIFIC_C)
-
-        print("\t\t- switch case to set Periph Clock Config")
         cls.code_gen.change_target_balise(TARGET_SWITCH_PERIPH_CLK_CFG_START, TARGET_SWITCH_PERIPH_CLK_CFG_END)
         cls.code_gen._write_into_file(switch_clk_periph, FMKCPU_CONFIGSPECIFIC_C)
 
-        print('\t\t- Function for Prescaler Peripherique External Clock')
-        #---------------------For FMKCPU.c---------------------#
-
-        
-
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<End code generation for FmkCpu Module>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
-
+    
 #------------------------------------------------------------------------------
 #                             FUNCTION IMPLMENTATION
 #------------------------------------------------------------------------------

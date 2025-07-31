@@ -57,9 +57,6 @@ class AppSpm_CodeGen():
 
     @classmethod
     def code_generation(cls, f_software_cfg, f_udscfg_path, f_is_uds_ope) -> None:
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for APPSPM Module>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         # Load needed excel arrays
         cls.code_gen.load_excel_file(f_software_cfg)
 
@@ -119,17 +116,15 @@ class AppSpm_CodeGen():
         #-----------------------------------------------------------------
         #------------------------make code gen----------------------------
         #-----------------------------------------------------------------
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for AppSns Module>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("\t- For configPublic file")
+        print('[INFO] : APPSPM_Codegen -> Config Public Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE,TARGET_T_ENUM_END_LINE)
-        print('\t\t Write enum Param')
         cls.code_gen._write_into_file(enum_prm, APPSPM_CFG_PUBLIC)
 
-        print("\t- For configPrivate file")
+        print('[INFO] : APPSPM_Codegen -> Config Private Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE,TARGET_T_VARIABLE_END_LINE)
         cls.code_gen._write_into_file(var_prm, APPSPM_CFG_PRIVATE)
+
+        
 #------------------------------------------------------------------------------
 #                             FUNCTION IMPLMENTATION
 #------------------------------------------------------------------------------

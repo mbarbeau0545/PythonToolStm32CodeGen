@@ -220,19 +220,16 @@ class FMKCDA_CodeGen():
         #-----------------------------------------------------------
         #------------code genration for FMKADC module---------------
         #-----------------------------------------------------------
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for FMFCDA Module>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("\t- For configPublic file")
+        
+        print('[INFO] : FMKCDA -> Config Public Code generation')
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE, TARGET_T_ENUM_END_LINE)
-        print("\t\t- Enum for adc cahnnel")
         cls.code_gen._write_into_file(enum_adc_channel, FMKCDA_CONFIGPUBLIC)
-        print("\t\t- Enum for adc")
         cls.code_gen._write_into_file(enum_adc, FMKCDA_CONFIGPUBLIC)
-        print("\t\t Enum for adc internal sensors")
         cls.code_gen._write_into_file(enum_other_calib,FMKCDA_CONFIGPUBLIC)
+
+
+        print('[INFO] : FMKCDA -> Config Private Code generation')
         cls.code_gen.change_target_balise(TARGET_ADC_CHNLNB_START, TARGET_ADC_CHNLNB_END)
-        print("\t\t- define for max channel per adc")
         cls.code_gen._write_into_file(def_adcx_max_channel, FMKCDA_CONFIGPRIVATE)
         cls.code_gen._write_into_file(def_other_calib, FMKCDA_CONFIGPRIVATE)
         cls.code_gen._write_into_file(def_vref_calib, FMKCDA_CONFIGPRIVATE)
@@ -243,16 +240,15 @@ class FMKCDA_CodeGen():
         cls.code_gen._write_into_file(var_vref_calib, FMKCDA_CONFIGPRIVATE)
         cls.code_gen._write_into_file(var_adc_max_channel, FMKCDA_CONFIGPRIVATE)
         cls.code_gen._write_into_file(var_adc_cfg, FMKCDA_CONFIGPRIVATE)
-        cls.code_gen.change_target_balise(TARGET_ADC_SWITCH_START, TARGET_ADC_SWITCH_END)
-        print("\t\t- swtich case to find stm channel from enum")
-        cls.code_gen._write_into_file(switch_adc_channel, FMKCDA_CONFIG_SPEC)
-
-        print('\t\t- Irqn Handler Function Declaration')
         cls.code_gen.change_target_balise(TARGET_ADC_X_IRQN_START, TARGET_ADC_X_IRQN_END)
         cls.code_gen._write_into_file(func_irqn, FMKCDA_CONFIGPRIVATE)
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<End code generation for FmkCda Module>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
+
+        print('[INFO] : FMKCDA -> Config Specific Code generation')
+        cls.code_gen.change_target_balise(TARGET_ADC_SWITCH_START, TARGET_ADC_SWITCH_END)
+        cls.code_gen._write_into_file(switch_adc_channel, FMKCDA_CONFIG_SPEC)
+
+        
+
 #------------------------------------------------------------------------------
 #                             FUNCTION IMPLMENTATION
 #------------------------------------------------------------------------------

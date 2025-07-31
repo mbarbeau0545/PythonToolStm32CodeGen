@@ -317,77 +317,30 @@ class FMKTIM_CodeGen():
         #------------code genration for FMKTIM module---------------
         #-----------------------------------------------------------
         #---------------------For FMKTIM_Config Public---------------------#
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for FMFTIM Module>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("\t- For configPublic file")
+
+        print('[INFO] : FMKTIM_Codegen -> Config Public Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE,TARGET_T_ENUM_END_LINE)
-
-        print('\t\t- enum for dac purpose timer')
         cls.code_gen._write_into_file(enum_it_lines_dac, FMKTIM_CFGPUBLIC)
-
-        print('\t\t- enum for event purpose timer')
         cls.code_gen._write_into_file(enum_it_lines_evnt, FMKTIM_CFGPUBLIC)
-
-        print('\t\t- enum for general purpose timer')
         cls.code_gen._write_into_file(enum_it_lines_gp, FMKTIM_CFGPUBLIC)
 
-        print("\t- For configPrivate file")
-        #---------------------For FMKTIM_Config Private---------------------#
-
-        print("\t\t- enum for timer channel")
+        print('[INFO] : FMKTIM_Codegen -> Config Private Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE,TARGET_T_ENUM_END_LINE)
         cls.code_gen._write_into_file(enum_channel, FMKTIM_CFGPRIVATE)
-        print("\t\t- enum for timer")
         cls.code_gen._write_into_file(enum_timer, FMKTIM_CFGPRIVATE)
-
         cls.code_gen.change_target_balise(TARGET_TIMER_CHNLNB_START, TARGET_TIMER_CHNLNB_END)
-        print("\t\t- Define for max channel per timer")
         cls.code_gen._write_into_file(def_tim_max_chnl, FMKTIM_CFGPRIVATE)
-
         cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE, TARGET_T_VARIABLE_END_LINE)
-      
-        print("\t\t- Variable for max channel per timer")
         cls.code_gen._write_into_file(var_tim_max_chnl, FMKTIM_CFGPRIVATE)
-
-        print("\t\t- Channel Interrupt Line Mapping")
         cls.code_gen._write_into_file(const_mapp_chnl_itline, FMKTIM_CFGPRIVATE)
-
-        print("\t\t- DAC Purpose Timer_Channel Mapping")
         cls.code_gen._write_into_file(const_mapp_dac_tim, FMKTIM_CFGPRIVATE)
-
-        print("\t\t- Event Purpose Timer_Channel Mapping")
         cls.code_gen._write_into_file(const_mapp_evnt_tim, FMKTIM_CFGPRIVATE)
-
-        print("\t\t- General Purpose Timer_Channel Mapping")
         cls.code_gen._write_into_file(const_mapp_gp_tim, FMKTIM_CFGPRIVATE)
-
-        print("\t\t- variable for timer information")
         cls.code_gen._write_into_file(var_timcfg, FMKTIM_CFGPRIVATE)
-
-        print("\t\t- Timer IRQN Handler start")
         cls.code_gen.change_target_balise(TARGET_TIMER_X_IRQH_START, TARGET_TIMER_X_IRQH_END)
-        cls.code_gen._write_into_file(func_imple, FMKTIM_CFGPRIVATE)
-        
-
-
-        print('\t for FMKTIM_ConfigSpecific')
-
+        cls.code_gen._write_into_file(func_imple, FMKTIM_CFGPRIVATE) 
 
         
-
-
-    
-
-       
-        #---------------------For FMKTIM.c---------------------#     
-        
-
-        
-
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<End code generation for FMKTIM Module>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
 
     #-------------------------
     # get_tim_chnl_used

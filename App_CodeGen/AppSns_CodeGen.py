@@ -202,28 +202,22 @@ class AppSns_CodeGen():
         #-----------------------------------------------------------------
         #------------------------make code gen----------------------------
         #-----------------------------------------------------------------
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for AppSns Module>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("\t- For configPublic file")
+        print('[INFO] : APPSNS_Codegen -> Config Public Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE,TARGET_T_ENUM_END_LINE)
-        print("\t\t Write enum sns, drv, unity")
         cls.code_gen._write_into_file(enum_unity, APPSNS_CONFIGPUBLIC_PATH)
         cls.code_gen._write_into_file(enum_drv, APPSNS_CONFIGPUBLIC_PATH)
         cls.code_gen._write_into_file(enum_sns, APPSNS_CONFIGPUBLIC_PATH)
         cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE,TARGET_T_VARIABLE_END_LINE)
-        print("\t- For configPrivate file")
-        print("\t\t- write variable for sns_cfg, drv_cfg")
+        
+        print('[INFO] : APPSNS_Codegen -> Config Private Code Generation')
         cls.code_gen._write_into_file(var_unities, APPSNS_CONFIGPRIVATE_PATH)
         cls.code_gen._write_into_file(var_sns, APPSNS_CONFIGPRIVATE_PATH)
         cls.code_gen._write_into_file(var_drv, APPSNS_CONFIGPRIVATE_PATH)
         cls.code_gen.change_target_balise(TARGET_T_INCLUDE_START, TARGET_T_INCLUDE_END)
         cls.code_gen._write_into_file(include_sns, APPSNS_CONFIGPRIVATE_PATH)
-        cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE[4:],TARGET_T_VARIABLE_END_LINE[4:])
-        print("\t- For AppSns.c file")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<End code generation for AppSns Module>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
+
+        
+    
 
     @classmethod
     def make_header_src_file(cls, f_sns_name:str):
@@ -277,7 +271,7 @@ class AppSns_CodeGen():
         cls.code_gen.change_target_balise(TARGET_FUNCTION_IFDEF_START,TARGET_FUNCTION_IFDEF_END)
         cls.code_gen._write_into_file(ifdef_h, distination_file_h)
 
-        print(f"Succesfully create Header and Source file for {f_sns_name}")
+        print(f"[INFO] : APPSNS_Codegen -> Succesfully create Header and Source file for {f_sns_name}")
 
 
         

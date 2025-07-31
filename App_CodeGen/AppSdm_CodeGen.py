@@ -60,9 +60,6 @@ class AppSdm_CodeGen():
 
     @classmethod
     def code_generation(cls, f_software_cfg, f_udscfg_path, f_is_uds_ope) -> None:
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for AppAct Module>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         # Load needed excel arrays
         cls.code_gen.load_excel_file(f_software_cfg)
         items_cfg_a = cls.code_gen.get_array_from_excel("AppSdm_DiagItemInfo")[1:]
@@ -172,30 +169,25 @@ class AppSdm_CodeGen():
         #-----------------------------------------------------------------
         #------------------------make code gen----------------------------
         #-----------------------------------------------------------------
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for AppSdm Module>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("\t- For configPublic file")
-        print("\t\t- Write enum item and strategy")
+        print('[INFO] : APPSDM_Codegen -> Config Public Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE,TARGET_T_ENUM_END_LINE)
         cls.code_gen._write_into_file(enum_strat, APPSDM_CONFIGPUBLIC_PATH)
         cls.code_gen._write_into_file(enum_item, APPSDM_CONFIGPUBLIC_PATH)
 
         
-        print("\t- For configPrivate file")
+        print('[INFO] : APPSDM_Codegen -> Config Private Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE,TARGET_T_VARIABLE_END_LINE)
         cls.code_gen._write_into_file(var_item_info, APPSDM_CONFIGPRIVATE_PATH)
         cls.code_gen._write_into_file(var_strat_cb, APPSDM_CONFIGPRIVATE_PATH)
 
-        print("\t Config Specific")
+        print('[INFO] : APPSDM_Codegen -> Config Specific Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_DIAG_STRAT_DECL_START_LINE, TARGET_T_DIAG_STRAT_DECL_END_LINE)
         cls.code_gen._write_into_file(decl_strat_func, APPSDM_CONGSPECIFIC_H)
 
         cls.code_gen.change_target_balise(TARGET_T_DIAG_STRAT_IMPL_START_LINE, TARGET_T_DIAG_STRAT_IMPL_END_LINE)
         cls.code_gen._write_into_file(impl_strat_func, APPSDM_CONGSPECIFIC_C)
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<End code generation for AppSdm Module>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
+
+        
         
     @classmethod
     def make_diag_strat_impl(self, f_strat_info):

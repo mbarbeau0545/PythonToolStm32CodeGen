@@ -500,76 +500,49 @@ class FMKIO_CodeGen():
         #-----------------------------------------------------------
         #------------code genration for FMKIO module----------------
         #-----------------------------------------------------------
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for FMKIO Module>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         # for FMKIO Config Private 
-        print("\t- For configPrivate file")
+        print('[INFO] : FMKIO_Codegen -> Config Private Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE,TARGET_T_VARIABLE_END_LINE)
-        print('\t\t- configuration for Serial signals')
         cls.code_gen._write_into_file(const_serial, FMKIO_CONFIGPRIVATE_PATH)
-        print('\t\t- configuration for CAN signals')
         cls.code_gen._write_into_file(const_can, FMKIO_CONFIGPRIVATE_PATH)
-        print("\t\t- configuration for PWN output signal")
         cls.code_gen._write_into_file(var_OutPWM, FMKIO_CONFIGPRIVATE_PATH)
-        print("\t\t- configuration for Digital output signal")
         cls.code_gen._write_into_file(var_OutDig, FMKIO_CONFIGPRIVATE_PATH)
-        print("\t\t- configuration for event Input signal")
         cls.code_gen._write_into_file(var_InEvnt, FMKIO_CONFIGPRIVATE_PATH)
-        print("\t\t- configuration for Frequency Input signal")
         cls.code_gen._write_into_file(var_InFreq, FMKIO_CONFIGPRIVATE_PATH)
-        print("\t\t- configuration for Analog Input signal")
         cls.code_gen._write_into_file(var_InAna, FMKIO_CONFIGPRIVATE_PATH)
-        print("\t\t- configuration for Digital Input signal")
         cls.code_gen._write_into_file(var_InDig, FMKIO_CONFIGPRIVATE_PATH)
-        print("\t\t- variable for stm32_framework pin mapping")
         cls.code_gen._write_into_file(var_bsp_pin_map, FMKIO_CONFIGPRIVATE_PATH)
-        print("\t- For configPublic file")
-        # for FMKIO Config public
-        cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE, TARGET_T_ENUM_END_LINE)
-        print('\t\t- enum for Serial Communication')
-        cls.code_gen._write_into_file(enum_serial, FMKIO_ConfigPublic_PATH)
-        print('\t\t- enum for CAN Communication')
-        cls.code_gen._write_into_file(enum_can, FMKIO_ConfigPublic_PATH)
-        print("\t\t- enum for PWM output signal")
-        cls.code_gen._write_into_file(enum_OutPWM, FMKIO_ConfigPublic_PATH)
-        print("\t\t- enum for Digital output signal")
-        cls.code_gen._write_into_file(enum_OutDig, FMKIO_ConfigPublic_PATH)
-        print("\t\t- enum for Event input signal")
-        cls.code_gen._write_into_file(enum_InEvnt, FMKIO_ConfigPublic_PATH)
-        print("\t\t- enum for Frequency input signal")
-        cls.code_gen._write_into_file(enum_InFreq, FMKIO_ConfigPublic_PATH)
-        print("\t\t- enum for Analog input signal")
-        cls.code_gen._write_into_file(enum_InAna, FMKIO_ConfigPublic_PATH)
-        print("\t\t- enum for Digital input signal")
-        cls.code_gen._write_into_file(enum_InDig, FMKIO_ConfigPublic_PATH)
-        print("\t\t- enum for pin signal")
-        cls.code_gen._write_into_file(enum_pin, FMKIO_ConfigPublic_PATH)
-        print("\t\t- enum for GPIO available for this stm")
-        cls.code_gen._write_into_file(enum_gpio, FMKIO_ConfigPublic_PATH)      
-
-
         
-        # for FMKIO
-        print("\t- For FMKIO_ConfigSpec.c file")
-        cls.code_gen.change_target_balise(TARGET_BALISE_SWITCH_GPIO_START, TARGET_BALISE_SWITCH_GPIO_END)
-        print("\t\t- switch case to found stm GPIO from enum")
-        cls.code_gen._write_into_file(switch_gpio, FMKIO_CONFIGSPEC_C)
+        
+        print('[INFO] : FMKIO_Codegen -> Config Public Code Generation')
+        cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE, TARGET_T_ENUM_END_LINE)
+        cls.code_gen._write_into_file(enum_serial, FMKIO_ConfigPublic_PATH)
+        cls.code_gen._write_into_file(enum_can, FMKIO_ConfigPublic_PATH)
+        cls.code_gen._write_into_file(enum_OutPWM, FMKIO_ConfigPublic_PATH)
+        cls.code_gen._write_into_file(enum_OutDig, FMKIO_ConfigPublic_PATH)
+        cls.code_gen._write_into_file(enum_InEvnt, FMKIO_ConfigPublic_PATH)
+        cls.code_gen._write_into_file(enum_InFreq, FMKIO_ConfigPublic_PATH)
+        cls.code_gen._write_into_file(enum_InAna, FMKIO_ConfigPublic_PATH)
+        cls.code_gen._write_into_file(enum_InDig, FMKIO_ConfigPublic_PATH)
+        cls.code_gen._write_into_file(enum_pin, FMKIO_ConfigPublic_PATH)
+        cls.code_gen._write_into_file(enum_gpio, FMKIO_ConfigPublic_PATH)     
 
-        print('\t\t- Exti IRQN Handler')
+       
+        # for FMKIO
+        print('[INFO] : FMKIO_Codegen -> Config Specific Code Generation')
+        cls.code_gen.change_target_balise(TARGET_BALISE_SWITCH_GPIO_START, TARGET_BALISE_SWITCH_GPIO_END)
+        cls.code_gen._write_into_file(switch_gpio, FMKIO_CONFIGSPEC_C)
         cls.code_gen.change_target_balise(TARGET_EXTI_X_IRQN_START, TARGET_EXTI_X_IRQN_END)
         cls.code_gen._write_into_file(func_irqn, FMKIO_CONFIGSPEC_C)
 
         cls.code_gen.change_target_balise(TARGET_SWITCH_GPIO_RCC_START, TARGET_SWITCH_GPIO_RCC_END)
-        print("\t\t- switch case to found Rcc clock for a GPIO")
         cls.code_gen._write_into_file(switch_gpio_rcc, FMKIO_CONFIGSPEC_C)
 
         for stm_pin in stm_pin_used_available:
             if stm_pin not in stm_pin_used:
-                print(f'WARNING : {stm_pin} unused')
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<End code generation for FMFIO Module>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
+                print(f'[WARNING] : FMKIO_Codegen -> {stm_pin} unused')
+        
+         
 #------------------------------------------------------------------------------
 #                             FUNCTION IMPLMENTATION
 #------------------------------------------------------------------------------

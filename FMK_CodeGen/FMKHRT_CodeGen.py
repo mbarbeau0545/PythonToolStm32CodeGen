@@ -198,51 +198,31 @@ class FMKHRT_CodeGen():
         #------------code genration for FMKTIM module---------------
         #-----------------------------------------------------------
         #---------------------For FMKTIM_Config Public---------------------#
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for FMFTIM Module>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("\t- For configPublic file")
+        print('[INFO] : FMKHRT_Codegen -> Config Public Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE,TARGET_T_ENUM_END_LINE)
-
-        print('\t\t- enum for High Resolution Line')
         cls.code_gen._write_into_file(enum_hr_line, FMKHRT_CFG_PUBLIC_PATH)
 
-       
-        print("\t- For configPrivate file")
         #---------------------For FMKTIM_Config Private---------------------#
+        print('[INFO] : FMKHRT_Codegen -> Config Private Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE,TARGET_T_ENUM_END_LINE)
-
-        print("\t\t- enum for timer channel")
         cls.code_gen._write_into_file(enum_channel, FMKHRT_CFG_SPEC_H)
-
-        print("\t\t- enum for timer slave ")
         cls.code_gen._write_into_file(enum_slave, FMKHRT_CFG_SPEC_H)
-
-        print("\t\t- enum for timer instance ")
         cls.code_gen._write_into_file(enum_highres_timer, FMKHRT_CFG_SPEC_H)
-
         cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE, TARGET_T_VARIABLE_END_LINE)
-      
-        print("\t\t- Variable for max channel per timer")
         cls.code_gen._write_into_file(const_mapp_chnl_line, FMKHRT_CFG_PRIVATE_PATH)
         cls.code_gen._write_into_file(var_timcfg, FMKHRT_CFG_PRIVATE_PATH)
+        cls.code_gen.change_target_balise(TARGET_IRQHAND_HR_LINE_START, TARGET_IRQHAND_HR_LINE_STOP)
+        cls.code_gen._write_into_file(gencode_irqn_hdler, FMKHRT_CFG_PRIVATE_PATH)
     
 
        
         #---------------------For FMKTIM.c---------------------#
-        print("\t- For FMKTIM.c file")
-        
-        print("\t\t- Timer Switch Case start")
+        print('[INFO] : FMKHRT_Codegen -> Config Specific Code Generation')
         cls.code_gen.change_target_balise(TARGET_SWITCH_CASE_HR_LINE_START, TARGET_SWITCH_CASE_HR_LINE_STOP)
         cls.code_gen._write_into_file(switch_mapp_line, FMKHRT_CFG_SPEC)
 
-        print("\t\t- IRQ Handler start")
-        cls.code_gen.change_target_balise(TARGET_IRQHAND_HR_LINE_START, TARGET_IRQHAND_HR_LINE_STOP)
-        cls.code_gen._write_into_file(gencode_irqn_hdler, FMKHRT_CFG_PRIVATE_PATH)
+        
 
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<End code generation for FMKTIM Module>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
 
     #-------------------------
     # get_tim_chnl_used

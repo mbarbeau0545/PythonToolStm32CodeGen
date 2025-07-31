@@ -56,9 +56,6 @@ class AppLgc_CodeGen():
 
     @classmethod
     def code_generation(cls, f_software_cfg, f_udscfg_path, f_is_uds_ope) -> None:
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for AppAct Module>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
         # Load needed
         cls.code_gen.load_excel_file(f_software_cfg)
@@ -194,32 +191,21 @@ class AppLgc_CodeGen():
         #-----------------------------------------------------------------
         #------------------------make code gen----------------------------
         #-----------------------------------------------------------------
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for AppSdm Module>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("\t- For configPublic file")
-        print("\t\t- enum agent/service")
+        print('[INFO] : APPLGC_Codegen -> Config Public Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE,TARGET_T_ENUM_END_LINE)
         cls.code_gen._write_into_file(enum_agent, APPLGC_CONFIGPUBLIC_PATH)
         cls.code_gen._write_into_file(enum_srv, APPLGC_CONFIGPUBLIC_PATH)
         cls.code_gen._write_into_file(enm_dependencies, APPLGC_CONFIGPUBLIC_PATH)
 
         
-        print("\t- For configPrivate file")
+        print('[INFO] : APPLGC_Codegen -> Config Private Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE,TARGET_T_VARIABLE_END_LINE)
         cls.code_gen._write_into_file(var_srv_dependencies, APPLGC_CONFIGPRIVATE_PATH)
         cls.code_gen._write_into_file(var_depencies, APPLGC_CONFIGPRIVATE_PATH)
         cls.code_gen._write_into_file(var_max_act_value, APPLGC_CONFIGPRIVATE_PATH)
         cls.code_gen._write_into_file(var_agent, APPLGC_CONFIGPRIVATE_PATH)
+        
     
-        print("\tFor Logic.c")
-        cls.code_gen.change_target_balise(TARGET_VARIABLE_START_LINE,TARGET_VARIABLE_END_LINE)
-        cls.code_gen._write_into_file(decl_srv_val_container, APPLGC_C)
-        cls.code_gen.change_target_balise(TARGET_ASSP_SRV_ACT_VALUE_START, TARGET_ASSP_SRV_ACT_VALUE_END)
-        cls.code_gen._write_into_file(var_act_srv_asso, APPLGC_C)
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<End code generation for AppSdm Module>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
         
 #------------------------------------------------------------------------------
 #                             FUNCTION IMPLMENTATION

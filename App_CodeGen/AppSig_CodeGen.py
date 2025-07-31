@@ -85,9 +85,6 @@ class AppSig_CodeGen():
 
     @classmethod
     def code_generation(cls, f_msg_cfg_file:str) -> None:
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for AppSig Module>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
         cls.file_cfg_path = f_msg_cfg_file
         cls.get_info_from_file()
@@ -228,33 +225,23 @@ class AppSig_CodeGen():
         codgen_srlmsg_cfg += '    };\n\n'
         codgen_canmsg_cfg += '    };\n\n'
 
-        print('\tConfig Public generation')
+        print('[INFO] : APPSIG_Codegen -> Config Public Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE, TARGET_T_ENUM_END_LINE)
-        print('\t\t For CAN Msg')
         cls.code_gen._write_into_file(codegen_enum_msg_can, APPSIG_CFG_PUBLIC)
-        print('\t\t For Srl Msg')
         cls.code_gen._write_into_file(codegen_enum_msg_srl, APPSIG_CFG_PUBLIC)
-        print('\t\t For Signal ')
         cls.code_gen._write_into_file(codegen_enum_sig, APPSIG_CFG_PUBLIC)
 
-        print('\tConfig Private generation')
+        print('[INFO] : APPSIG_Codegen -> Config Private Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_DEFINE_START, TARGET_T_DEFINE_END)
-        print('\t\t For CAN Define Id')
         cls.code_gen._write_into_file(codgen_def_canid, APPSIG_CFG_PRIVATE)
-        print('\t\t For Srl Define Id')
         cls.code_gen._write_into_file(codgen_def_srlid, APPSIG_CFG_PRIVATE)
-
         cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE, TARGET_T_VARIABLE_END_LINE)
-        print('\t\tFor Can msg configuration')
         cls.code_gen._write_into_file(codgen_canmsg_cfg, APPSIG_CFG_PRIVATE)
-        print('\t\tFor Can serial configuration')
         cls.code_gen._write_into_file(codgen_srlmsg_cfg, APPSIG_CFG_PRIVATE)
-        print('\t\tFor can decode variable')
         cls.code_gen._write_into_file(codgen_canmsg_dcode, APPSIG_CFG_PRIVATE)
-        print('\t\tFor srl decode variable')
         cls.code_gen._write_into_file(codgen_srlmsg_dcode, APPSIG_CFG_PRIVATE)
-        print('\t\tFor signal configuration')
         cls.code_gen._write_into_file(codgen_sigCfg, APPSIG_CFG_PRIVATE)
+        
         
         
 
@@ -326,7 +313,7 @@ class AppSig_CodeGen():
                                 'enum': enum_name
                             }
                         else:
-                            print(f'While in SIGNALS, no signal pattern in line: {line.strip()}')
+                            print(f'[INFO] : APPSIG_Codegen : While in SIGNALS, no signal pattern in line: {line.strip()}')
 
                     case 'SEND' | 'RECEIVE' | 'SENDRECEIVE':
                         if line.startswith('['):  # Ex: [Symbol1]

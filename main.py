@@ -23,19 +23,21 @@ from PythonToolCfg.APP_PATH import *
 import json 
 from PyCodeGene import LoadConfig_FromExcel as LCFE
 
-from FMK_CodeGen.FMKCPU_CodeGen import FMKCPU_CodeGen as FMKCPU
-from FMK_CodeGen.FMKTIM_CodeGen import FMKTIM_CodeGen as FMKTIM
-from FMK_CodeGen.FMKIO_CodeGen  import FMKIO_CodeGen as FMKIO
-from FMK_CodeGen.FMKCDA_CodeGen  import FMKCDA_CodeGen as FMKCDA
-from FMK_CodeGen.FMKCPU_CodeGen  import FMKCPU_CodeGen as FMKCPU
-from FMK_CodeGen.FMKSRL_CodeGen  import FMKSRL_CodeGen as FMKSRL
-from FMK_CodeGen.FMKHRT_CodeGen  import FMKHRT_CodeGen as FMKHRT
-from App_CodeGen.AppSns_CodeGen import AppSns_CodeGen as APPSNS
-from App_CodeGen.AppAct_CodeGen import AppAct_CodeGen as APPACT
-from App_CodeGen.AppSdm_CodeGen import AppSdm_CodeGen as APPSDM
-from App_CodeGen.AppSpm_CodeGen import AppSpm_CodeGen as APPSPM
-from App_CodeGen.AppLgc_CodeGen import AppLgc_CodeGen as APPLGC
-from App_CodeGen.AppSig_CodeGen import AppSig_CodeGen as APPSIG
+from FMK_CodeGen.FMKCPU_CodeGen     import FMKCPU_CodeGen as FMKCPU
+from FMK_CodeGen.FMKTIM_CodeGen     import FMKTIM_CodeGen as FMKTIM
+from FMK_CodeGen.FMKIO_CodeGen      import FMKIO_CodeGen as FMKIO
+from FMK_CodeGen.FMKCDA_CodeGen     import FMKCDA_CodeGen as FMKCDA
+from FMK_CodeGen.FMKCPU_CodeGen     import FMKCPU_CodeGen as FMKCPU
+from FMK_CodeGen.FMKSRL_CodeGen     import FMKSRL_CodeGen as FMKSRL
+from FMK_CodeGen.FMKHRT_CodeGen     import FMKHRT_CodeGen as FMKHRT
+from FMK_CodeGen.FMKFDCAN_CodeGen   import FMKFDCAN_CodeGen as FMKFDCAN
+
+from App_CodeGen.AppSns_CodeGen     import AppSns_CodeGen as APPSNS
+from App_CodeGen.AppAct_CodeGen     import AppAct_CodeGen as APPACT
+from App_CodeGen.AppSdm_CodeGen     import AppSdm_CodeGen as APPSDM
+from App_CodeGen.AppSpm_CodeGen     import AppSpm_CodeGen as APPSPM
+from App_CodeGen.AppLgc_CodeGen     import AppLgc_CodeGen as APPLGC
+from App_CodeGen.AppSig_CodeGen     import AppSig_CodeGen as APPSIG
 #------------------------------------------------------------------------------
 #                                       CONSTANT
 #------------------------------------------------------------------------------
@@ -75,28 +77,28 @@ def main()-> None:
     FMKHRT.code_generation(hardware_cfg_path)
     FMKCDA.code_genration(hardware_cfg_path)
     FMKSRL.code_genration(hardware_cfg_path)
+    FMKFDCAN.code_genration(hardware_cfg_path)
     FMKIO.code_generation(hardware_cfg_path)
 
     #--- create Json file for Uds Configuration with the version ---# 
     code_gen = LCFE()
     code_gen.load_excel_file(software_cfg_path)
     gnrl_info = code_gen.get_array_from_excel('GeneralInfoSoftware')[1:][0]
-    print(gnrl_info)
     soft_version = str(f'V{gnrl_info[0]}Pr{gnrl_info[1]}')
     soft_udscfg_path = f"Doc\\ConfigPrj\\UdsCfg\\UdsInfo_{soft_version}.json"
     #--- check if the version already exist, if it exists, we erase it, if it doesn't we create it ----#
     filled_uds_file = True
 
     if os.path.isfile(soft_udscfg_path):
-        response = input(f"File 'UdsInfo_{soft_version}.json' already exists. Do you want to erase it ? (Y/N): ").strip().lower()
+        response = input(f"[WARNING] : File 'UdsInfo_{soft_version}.json' already exists. Do you want to erase it ? (Y/N): ").strip().lower()
         if response.lower() == 'n':
             filled_uds_file = False
-            print('The file will no be modified')
+            print('[INFO] : The file will no be modified')
 
     if filled_uds_file:
         with open(soft_udscfg_path, 'w') as file:
                     json.dump({}, file, indent=4)
-                    print(f"Uds Config for {soft_version} has been created.")
+                    print(f"[INFO] : Uds Config for {soft_version} has been created.")
     
     APPSNS.code_generation(software_cfg_path, soft_udscfg_path, filled_uds_file)
     APPACT.code_generation(software_cfg_path, soft_udscfg_path, filled_uds_file)

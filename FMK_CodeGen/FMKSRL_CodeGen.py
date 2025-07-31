@@ -79,7 +79,6 @@ class FMKSRL_CodeGen():
         #-------------------------------Make Enum -----------------------
         #----------------------------------------------------------------
         max_line = len(info_array)
-        print(max_line)
         enm_srline = cls.code_gen.make_enum_from_variable(ENUM_FMKSRL_LINE, [idx for idx in range(1, (max_line + 1))],
                                                             't_eFMKSRL_SerialLine', 0,
                                                             "Enum for Serial Line Available on CPU",
@@ -175,33 +174,20 @@ class FMKSRL_CodeGen():
         #-----------------------------------------------------------
         #------------code genration for FMKCPU module---------------
         #-----------------------------------------------------------
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<Start code generation for FMFSRL Module>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print('\t- For Config Public File ')
+        print('[INFO] : FMKSRL_Codegen -> Config Public Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE, TARGET_T_ENUM_END_LINE)
-
-        print('\t\t- For Serial Line')
         cls.code_gen._write_into_file(enm_srline, FMKSRL_CFGPUBLIC)
 
-        print('\t- For Config Private File ')
+        print('[INFO] : FMKSRL_Codegen -> Config Private Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE, TARGET_T_VARIABLE_END_LINE)
-
-        print('\t\t- For constant mapping instance')
         cls.code_gen._write_into_file(cst_mapp_istnc, FMKSRL_CFGPRIVATE)
-        print('\t\tFor Buffer Size')
         cls.code_gen._write_into_file(var_srl_info, FMKSRL_CFGPRIVATE)
         cls.code_gen._write_into_file(var_RxTx_buffer, FMKSRL_CFGPRIVATE)
-        
-
-        print('\t\tFor IRQN Handler')
         cls.code_gen.change_target_balise(TARGET_IRQN_HDLR_START, TARGET_IRQN_HDLR_END)
         cls.code_gen._write_into_file(irqn_hdlr, FMKSRL_CFGPRIVATE)
 
-      
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<End code generation for FMFSRL Module>>>>>>>>>>>>>>>>>>>>")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
+        
+
 #------------------------------------------------------------------------------
 #                             FUNCTION IMPLMENTATION
 #------------------------------------------------------------------------------
