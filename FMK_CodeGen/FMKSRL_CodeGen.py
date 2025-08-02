@@ -137,9 +137,9 @@ class FMKSRL_CodeGen():
             else: 
                 var_srl_info +=  f'            .c_DmaRqstRx   = (t_eFMKCPU_DmaRqst)0xFF,\n' \
                              + f'            .c_DmaRqstTx   = (t_eFMKCPU_DmaRqst)0xFF,\n' 
-            var_srl_info    += f'            .Rx_StartAddressBuffer_pu8 = (t_uint8 *)(&g_SrlLine_{idx_line}_RxBuffer_ua8),\n'\
+            var_srl_info    += f'            .Rx_StartAddressBuffer_pu8 = (t_uint8 *)(&g_SrlLine_{idx_line}_RxBuffer_ua8[0]),\n'\
                             +  f'            .Rx_bufferSize_u16 = (t_uint16){rx_size_buff},\n'\
-                            +  f'            .Tx_StartAddressBuffer_pu8 = (t_uint8 *)(&g_SrlLine_{idx_line}_TxBuffer_ua8),\n'\
+                            +  f'            .Tx_StartAddressBuffer_pu8 = (t_uint8 *)(&g_SrlLine_{idx_line}_TxBuffer_ua8[0]),\n'\
                             +  f'            .Tx_bufferSize_u16 = (t_uint16){tx_size_buff},\n'
             var_srl_info   +=  '        },\n'
             
