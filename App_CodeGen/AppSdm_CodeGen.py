@@ -83,8 +83,7 @@ class AppSdm_CodeGen():
                     + "    {\n"
         var_item_info += "    /**\n" + "    * @brief Diagnostic Item Configuration\n" + "    */\n"\
                     + f'    t_sAPPSM_DiagItemCfg c_AppSdm_DiagItemCfg_as[{APPSDM_ENUM_ROOT_DIAG_ITEM}_NB] =' + '{\n'\
-                    + '        // DebuncerValueMs                        NotifyUser                     Log Error                      Applied Startegy\n'
-        var_item_info += "    /**\n" + "    * @brief Variable for Diagnostic Item Information\n" + "    */\n"
+                    + '        // DebuncerCounter              Unactive Item Delay          NotifyUser                     Log Error                      Applied Startegy\n'
         for idx, item_info in enumerate(items_cfg_a):
             if idx == 0:
                 enum_item += f'        {APPSDM_ENUM_ROOT_DIAG_ITEM}_{str(item_info[1]).upper()} = 0x00,'
@@ -94,27 +93,33 @@ class AppSdm_CodeGen():
             enum_item += " " * ((SPACE_VARIABLE) - len(f"{APPSDM_ENUM_ROOT_DIAG_ITEM}_{item_info[1]}"))\
                         + f'// {str(item_info[-1])}\n'
             
+            if item_info[3] is None:
+                stay_unactive_delay = '0xFFFFFFFF'
+            else:
+                stay_unactive_delay = item_info[3]
             var_item_info += '        {'\
                         + f'(t_uint16){item_info[2]},'\
                         + " " * ((SPACE_VARIABLE) - len(f"(t_uint16){item_info[2]},"))\
-                        + f'(t_bool){item_info[3]},'\
-                        + " " * ((SPACE_VARIABLE) - len(f"(t_bool){item_info[3]},"))\
+                        + f'(t_uint32){stay_unactive_delay},'\
+                        + " " * ((SPACE_VARIABLE) - len(f"(t_uint32){stay_unactive_delay},"))\
                         + f'(t_bool){item_info[4]},'\
-                        + " " * ((SPACE_VARIABLE) - len(f"(t_bool){item_info[4]},"))
+                        + " " * ((SPACE_VARIABLE) - len(f"(t_bool){item_info[4]},"))\
+                        + f'(t_bool){item_info[5]},'\
+                        + " " * ((SPACE_VARIABLE) - len(f"(t_bool){item_info[5]},"))
             if str(item_info[5]) == 'None':
                 var_item_info += f'{APPSDM_ENM_DIAG_STRAT}_NONE'
             else:
-                var_item_info += f'{APPSDM_ENM_DIAG_STRAT}_{str(item_info[5]).upper()}'
+                var_item_info += f'{APPSDM_ENM_DIAG_STRAT}_{str(item_info[6]).upper()}'
 
             var_item_info += '},'\
-                            + " " * ((SPACE_VARIABLE) - len(f"{APPSDM_ENM_DIAG_STRAT}_{str(item_info[5])}"))\
+                            + " " * ((SPACE_VARIABLE) - len(f"{APPSDM_ENM_DIAG_STRAT}_{str(item_info[6])}"))\
                             + f'// {item_info[1]}\n'
             
             if f_is_uds_ope:
                     uds_sdm_data["DIAGNOSTIC"][str(item_info[1])] = {
                             'id' : f'{idx}',
-                            'debug_Info_1' : f'{str(item_info[6])}',
-                            'debug_Info_2' : f'{str(item_info[7])}'
+                            'debug_Info_1' : f'{str(item_info[7])}',
+                            'debug_Info_2' : f'{str(item_info[8])}'
                     }
         
         enum_item += f'\n        {APPSDM_ENUM_ROOT_DIAG_ITEM}_NB,\n'
