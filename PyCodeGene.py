@@ -252,7 +252,7 @@ class LoadConfig_FromExcel():
         if f_element_description != []:
             make_desc_b = True
             if len(f_element_description) != len(f_suffix_enum):
-                raise ValueError("Suffix list enum and enum description has not hte same len")
+                raise ValueError(f"Suffix list enum and enum description has not the same len, got {f_element_description} and {f_suffix_enum}")
         
         if(f_enum_description != ""):
             if f_IsHfile_b:

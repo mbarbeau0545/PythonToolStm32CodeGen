@@ -61,7 +61,8 @@ TARGET_FMKCPU_SWITCH_RQST_START  = '            /* CAUTION : Automatic generated
 TARGET_FMKCPU_SWITCH_RQST_END    = '            /* CAUTION : Automatic generated code section for Request Dma: End */\n'
 TARGET_FMKCPU_SWITCH_DMATYPE_START = '            /* CAUTION : Automatic generated code section for Dma Type: Start */\n'
 TARGET_FMKCPU_SWITCH_DMATYPE_END = '            /* CAUTION : Automatic generated code section for Dma Type: End */\n'
-
+TARGET_CPU_FAM_START = '    /* CAUTION : Automatic generated code section for Ecu Family: Start */\n'
+TARGET_CPU_FAM_END   = '    /* CAUTION : Automatic generated code section for Ecu Family: End */\n'
 
 ENUM_FMKCPU_DMA_CHANNEL = 'FMKCPU_DMA_CHANNEL'
 ENUM_FMKCPU_DMA_CTRL    = 'FMKCPU_DMA_CTRL'
@@ -70,7 +71,7 @@ ENUM_FMKCPU_DMARQST     = 'FMKCPU_DMA_RQSTYPE'
 ENUM_FMKCPU_DMATYPE     = 'FMKCPU_DMA_TYPE'
 ENUM_FMKCPU_DMA_TRANSPRIO          = 'FMKCPU_DMA_TRANSPRIO'
 
-
+CPU_FAMILY_MANAGE = ['G4', 'H7']
 PERIPH_CLOCK_NEED_PRESCALER = ['ADC', 'I2C', 'I2S', 'LPTIM', 'TIM', 'LPUART', 'QUADSPI', 'RNG', 'USB', 'SAI1', 'FDCAN', 'CAN', 'UART', 'USART', 'HRTIM']
 
 PERIPH_TO_CLKSRC:Dict[str,str] = {
@@ -80,11 +81,23 @@ PERIPH_TO_CLKSRC:Dict[str,str] = {
     'HCLK1'    :   None,
     'AHB1'     :   None,
     'AHB2'     :   None,
+    'AHB3'     :   None,
+    'AHB4'     :   None,
     'APB1'     :  'PCLK1',
     'APB2'     :  'PCLK2',
+    'APB3'     :  'PCLK3',
+    'APB4'     :  'PCLK4',
     'PLLQ'     :  'PLL',
     'PLLP'     :  'PLL',
-
+    'PLL1P'     :  'PLL',
+    'PLL1Q'     :  'PLL',
+    'PLL1R'     :  'PLL',
+    'PLL2P'     :  'PLL2',
+    'PLL2Q'     :  'PLL2',
+    'PLL2R'     :  'PLL2',
+    'PLL3P'     :  'PLL3',
+    'PLL3Q'     :  'PLL3',
+    'PLL3R'     :  'PLL3',
 }
 # CAUTION : Automatic generated code section: Start #
 
@@ -100,6 +113,7 @@ class DMA_ConfigError(Exception):
 
 class PeriphClockCfgError(Exception):
     pass
+
 
 class FMKCPU_CodeGen():
     """
@@ -126,6 +140,15 @@ class FMKCPU_CodeGen():
     itline_timchnl_mapping:Dict[str, List[str]] = {}
     code_gen = LCFE()
     stm_tim_chnl = []
+    cpu_family:str = ''
+
+    #-------------------------
+    # code_generation
+    #-------------------------
+    @classmethod
+    def get_ecu_family(cls) -> str:
+        return cls.cpu_family
+    
     #-------------------------
     # code_generation
     #-------------------------
@@ -161,7 +184,6 @@ class FMKCPU_CodeGen():
         rcc_ena_decl = ""
         rcc_dis_decl  = ""
         const_osc_rcc_src = ""
-        switch_rcc_prsc = ""
         switch_irqn = ""
         switch_clk_periph = ''
         include_cpu = ""
@@ -186,9 +208,15 @@ class FMKCPU_CodeGen():
         #-----------------------------make cpu include-------------------
         #----------------------------------------------------------------
         # only takes tha family for include function
+        cls.cpu_family = str(cpu_cfg).upper()[5:7]
+
+        if cls.cpu_family not in CPU_FAMILY_MANAGE:
+            raise Exception(f'{cls.cpu_family} not handle')
         cpu_function =   f'    #include "{str(cpu_cfg)[:7]}xx_hal.h"\n'
         include_cpu_hw = f'    #include "{cpu_cfg}.h"\n'
         include_cpu = cpu_function + include_cpu_hw
+
+        codgen_cpu_family = f"    #define FMKCPU_STM32_ECU_FAMILY_{cls.cpu_family.upper()}\n"
         #----------------------------------------------------------------
         #-----------------------------make sysclock enum-----------------
         #-----------------------------------------------------------------
@@ -199,7 +227,7 @@ class FMKCPU_CodeGen():
         #----------------------------------------------------------------
         #-----------------------------make rcc enum----------------------
         #-----------------------------------------------------------------
-        enum_rcc = cls.code_gen.make_enum_from_variable(ENUM_FMKCPU_RCC_ROOT, [str(rcclock_cfg[0]) for rcclock_cfg in rcclock_cfg_a[1:]], 
+        enum_rcc = cls.code_gen.make_enum_from_variable(ENUM_FMKCPU_RCC_ROOT,  [str(rcclock_cfg[0]) for rcclock_cfg in rcclock_cfg_a[1:]],
                                                             "t_eFMKCPU_ClockPort", 0, 
                                                             "Enum for rcc clock state reference",
                                                             [f'Reference to RCC Clock {rcclock_cfg[0]}' for rcclock_cfg in rcclock_cfg_a[1:]])
@@ -241,17 +269,17 @@ class FMKCPU_CodeGen():
                 periph_clk_brk.append(f'{ENUM_FMKCPU_RCC_ROOT}_{rcc_cfg[0]}')
             
             elif rcc_cfg[2] == 'Yes':
-
+                clk_selec_prefix = cls.__get_structure(rcc_cfg[0])
                 preiph_clk_src = PERIPH_TO_CLKSRC.get(rcc_cfg[1], None)
 
                 if preiph_clk_src == None:
                     PeriphClockCfgError(f'Cannot found periph clock Source for {rcc_cfg[1]}')
 
                 switch_clk_periph +=  f'            case {ENUM_FMKCPU_RCC_ROOT}_{rcc_cfg[0]}:\n' \
-                                    + f'                PeriphClkCfg_s.{str(rcc_cfg[0]).capitalize()}ClockSelection = ' \
-                                    + f'RCC_{str(rcc_cfg[0]).upper()}CLKSOURCE_{preiph_clk_src.upper()};\n' \
+                                    + f'                periphClkCfg_s.{clk_selec_prefix}ClockSelection = ' \
+                                    + f'RCC_{clk_selec_prefix.upper()}CLKSOURCE_{preiph_clk_src.upper()};\n' \
                                     + f'                //------ Reference Clock  Source {rcc_cfg[1]} ------//\n' \
-                                    + f'                PeriphClkCfg_s.PeriphClockSelection = RCC_PERIPHCLK_{str(rcc_cfg[0]).upper()};\n' \
+                                    + f'                periphClkCfg_s.PeriphClockSelection = RCC_PERIPHCLK_{clk_selec_prefix.upper()};\n' \
                                     +  '                break;\n'
             else:
                 PeriphClockCfgError(f'{rcc_cfg[2]} is not allowed, only Yes or No value allowed')
@@ -262,7 +290,6 @@ class FMKCPU_CodeGen():
             for rcc_no_periph in periph_clk_brk]
         )
         switch_clk_periph += f'            case {ENUM_FMKCPU_RCC_ROOT}_NB:\n            default:\n                Ret_e = RC_WARNING_NO_OPERATION;\n                break;\n'
-        switch_rcc_prsc + '\n'
         const_osc_rcc_src += '    };\n\n'
         #----------------------------------------------------------------
         #----------make rcc implementation/Declaration--------------------
@@ -327,7 +354,14 @@ class FMKCPU_CodeGen():
         cst_dmamux_mapp += '    /**< Variable to mapp every Dma Mux to a Rcc Clock */\n' \
                 + f'    const t_eFMKCPU_ClockPort c_FMKCPU_DmaMuxRccMapp_ae[{ENUM_FMKCPU_DMA_MUX}_NB] =' + '{\n'
         
-        cst_dmamux_mapp += ''.join(f'           {ENUM_FMKCPU_RCC_ROOT}_DMAMUX{idx + 1}\n' for idx in range(0, dmamux_nb))
+        if cls.cpu_family == 'G4': 
+            cst_dmamux_mapp += ''.join(f'           {ENUM_FMKCPU_RCC_ROOT}_DMAMUX{idx + 1}\n' for idx in range(0, dmamux_nb))
+        else: # it's the rcc of dma 1 and BDMA for the second, 'cause when enable DMA 1 it's 
+            # autmatically start DMAMUX1 and idem for BDMA
+            # check there is'nt more than 2 DMAMUX so i did like that 
+            cst_dmamux_mapp += f'        {ENUM_FMKCPU_RCC_ROOT}_DMA1,\n'\
+                            +  f'        {ENUM_FMKCPU_RCC_ROOT}_BDMA\n'
+            
         cst_dmamux_mapp += '    };\n\n'
         for rqst_info in dma_cfg_array:
 
@@ -393,11 +427,20 @@ class FMKCPU_CodeGen():
                     +  '            .chnlCfg_as = {\n'
             
             for idx_cnhl in range(1, (dma_info[1]  + 1)):
-                 var_dma_cfg += f'                [{ENUM_FMKCPU_DMA_CHANNEL}_{idx_cnhl}] = ' \
-                            + '{\n' \
-                            + f'                    .Instance = {dma_info[2]}_Channel{idx_cnhl},\n' \
-                            + f'                   .c_IRQNType_e = {ENUM_FMKCPU_NVIC_ROOT}_{str(f"{dma_info[2]}_Channel{idx_cnhl}").upper()}_IRQN,\n' \
-                            + '                },\n\n'
+                if cls.cpu_family == 'G4':
+                    dma_channel =  f'{dma_info[2]}_Channel{idx_cnhl}'
+                    dma_irqn = f'{ENUM_FMKCPU_NVIC_ROOT}_{str(f"{dma_info[2]}_Channel{idx_cnhl}").upper()}_IRQN'
+                elif cls.cpu_family == 'H7':
+                    dma_channel = f'{dma_info[2]}_Stream{int(idx_cnhl) -1}'
+                    dma_irqn = f'{ENUM_FMKCPU_NVIC_ROOT}_{str(f"{dma_info[2]}_Stream{int(idx_cnhl) -1}").upper()}_IRQN'
+                else:
+                    raise Exception(f'{cls.cpu_family} Unkown')
+                
+                var_dma_cfg += f'                [{ENUM_FMKCPU_DMA_CHANNEL}_{idx_cnhl}] = ' \
+                        + '{\n' \
+                        + f'                    .Instance = {dma_channel},\n' \
+                        + f'                   .c_IRQNType_e = {dma_irqn},\n' \
+                        + '                },\n\n'
             var_dma_cfg += '            },\n'
             var_dma_cfg += '        },\n'
 
@@ -418,6 +461,9 @@ class FMKCPU_CodeGen():
         cls.code_gen._write_into_file(enum_osc_freq, FMKCPU_CONFIGPUBLIC)
         cls.code_gen.change_target_balise(TARGET_CPU_CFG_START,TARGET_CPU_CFG_END)
         cls.code_gen._write_into_file(include_cpu,FMKCPU_CONFIGPUBLIC)
+        cls.code_gen.change_target_balise(TARGET_CPU_FAM_START, TARGET_CPU_FAM_END)
+        cls.code_gen._write_into_file(codgen_cpu_family, FMKCPU_CONFIGPUBLIC)
+
 
         #---------------------For FMKCPU_Config Private---------------------#
         print('[INFO] : FMKCPU -> Config Private Code generation')
@@ -450,8 +496,28 @@ class FMKCPU_CodeGen():
         cls.code_gen.change_target_balise(TARGET_SWITCH_PERIPH_CLK_CFG_START, TARGET_SWITCH_PERIPH_CLK_CFG_END)
         cls.code_gen._write_into_file(switch_clk_periph, FMKCPU_CONFIGSPECIFIC_C)
 
-    
-#------------------------------------------------------------------------------
+    @classmethod
+    def __get_structure(cls, f_periph:str)->str:
+
+        if cls.cpu_family == 'G4':
+            return str(f_periph).capitalize()
+        else:
+            # juste one clock for ADC
+            if 'ADC' in f_periph.upper():
+                return 'Adc'
+            elif 'UART' in f_periph.upper():
+                if f_periph[4:] == '1' or f_periph[4:] == '6':
+                    return 'Usart16'
+                else:
+                    return 'Usart234578' 
+            elif 'USART' in f_periph.upper():
+                if f_periph[4:] == '1' or f_periph[4:] == '6':
+                    return 'Usart16'
+                else:
+                    return 'Usart234578' 
+            else:
+                return f_periph.capitalize()
+ #------------------------------------------------------------------------------
 #                             FUNCTION IMPLMENTATION
 #------------------------------------------------------------------------------
 

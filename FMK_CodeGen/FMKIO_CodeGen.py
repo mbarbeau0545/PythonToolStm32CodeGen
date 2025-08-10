@@ -26,6 +26,7 @@ from PyCodeGene import LoadConfig_FromExcel as LCFE, TARGET_T_END_LINE,TARGET_T_
 
 from typing import List, Dict
 from PythonToolCfg.FMK_PATH import * 
+from .FMKCPU_CodeGen import FMKCPU_CodeGen
 from .FMKTIM_CodeGen import TimerCfg_alreadyUsed, FMKTIM_CodeGen
 from .FMKHRT_CodeGen import FMKHRT_CodeGen, LETTER_LIST, ENUM_ROOT_HR_LINE
 #------------------------------------------------------------------------------
@@ -44,13 +45,16 @@ ENUM_ROOT_TIM_ORGN = "FMKIO_ITLINE_TYPE"
 DESCRIP_PWM = {
     "BscTim" : "Pwm with Adaptable Frequency and DutyCycle",
     "AdvTim" : "Pwm with Adaptable Frequency, DutyCycle and Pulses, (WaveForm pulses cannot be change during generation)",
-    "HrTim" : "Pwm with Adaptable Frequency > 500 Hz, DutyCycle, Pulses and current Feedback, (Waveform Pulses can be change during generation)",
+    "HrTim" : "Pwm with Adaptable Frequency > x Hz @ref FMKHRT_ConfigurePwmLine, DutyCycle, Pulses and current Feedback, (Waveform Pulses can be change during generation)",
 }
 #------------------------------------------------------------------------------
 #                                       CLASS
 #------------------------------------------------------------------------------
 class GPIO_AlreadyConfgigured(Exception):
     pass
+class GPIO_ConfgigError(Exception):
+    pass
+
 class FMKIO_CodeGen():
     """
             Make code generation for FMKIO modules which include 
@@ -83,6 +87,7 @@ class FMKIO_CodeGen():
         OutPWM_astr      = cls.code_gen.get_array_from_excel("FMKIO_OutputPwm")
         OutDig_astr      = cls.code_gen.get_array_from_excel("FMKIO_OutputDig")
         SigCan_astr      = cls.code_gen.get_array_from_excel('FMKIO_CanCfg')
+        encdr_cfg_astr   = cls.code_gen.get_array_from_excel('FMKIO_EcdrCfg')[1:]
         SigSerial_astr   = cls.code_gen.get_array_from_excel('FMKSRL_INFO')[1:]
         list_irqn_hdler  = cls.code_gen.get_array_from_excel('FMKIO_IRQNHandler')
         Descitpion_pwm_freq = ['GPIO_name','Pin_name','alternate function', 'Interrupt Line', "ItLineType"]
@@ -116,12 +121,14 @@ class FMKIO_CodeGen():
         switch_gpio = ""
         switch_gpio_rcc  = ""
         func_irqn = ''
-
+        ecdr_sig = []
+        const_ecdr:str = ''
+        optional_desc_pwm:List[str] = [""] * len(OutPWM_astr[1:])
         enum_suffix_a: List[str] = []
         enum_description = ""
         element_description_a:  List[str] = []
         # this pin are usually used by hardware
-        stm_pin_used_available = [
+        stm_pin_used_available_g4 = [
             'PA0', 'PA1', 'PA2', 'PA3', 'PA4', 'PA5', 'PA6', 'PA7', 'PA8', 'PA9', 'PA10', 'PA11', 'PA12', 'PA13', 'PA14', 'PA15',
             'PB0', 'PB1', 'PB2', 'PB3', 'PB4', 'PB5', 'PB6', 'PB7', 'PB8', 'PB9', 'PB10', 'PB11', 'PB12', 'PB13', 'PB14', 'PB15',
             'PC0', 'PC1', 'PC2', 'PC3', 'PC4', 'PC5', 'PC6', 'PC7', 'PC8', 'PC9', 'PC10', 'PC11', 'PC12', 'PC13', 'PC14', 'PC15',
@@ -132,8 +139,28 @@ class FMKIO_CodeGen():
             #'PH0', 'PH1'
         ]
 
-        stm_pin_used = ['PA14', 'PA13', 'PA15', 'PC0', 'PC1']
+        stm_pin_used_available_h7 = [
+            'PA0', 'PA1', 'PA2', 'PA3', 'PA4', 'PA5', 'PA6', 'PA7', 'PA8', 'PA9', 'PA10', 'PA11', 'PA12', 'PA13', 'PA14', 'PA15',
+            'PB0', 'PB1', 'PB2', 'PB3', 'PB4', 'PB5', 'PB6', 'PB7', 'PB8', 'PB9', 'PB10', 'PB11', 'PB12', 'PB13', 'PB14', 'PB15',
+            'PC0', 'PC1', 'PC2', 'PC3', 'PC4', 'PC5', 'PC6', 'PC7', 'PC8', 'PC9', 'PC10', 'PC11', 'PC12', 'PC13', 'PC14', 'PC15',
+            'PD0', 'PD1', 'PD2', 'PD3', 'PD4', 'PD5', 'PD6', 'PD7', 'PD8', 'PD9', 'PD10', 'PD11', 'PD12', 'PD13', 'PD14', 'PD15',
+            'PE0', 'PE1', 'PE2', 'PE3', 'PE4', 'PE5', 'PE6', 'PE7', 'PE8', 'PE9', 'PE10', 'PE11', 'PE12', 'PE13', 'PE14', 'PE15',
+            'PF0', 'PF1', 'PF2', 'PF3', 'PF4', 'PF5', 'PF6', 'PF7', 'PF8', 'PF9', 'PF10', 'PF11', 'PF12', 'PF13', 'PF14', 'PF15',
+            'PG0', 'PG1', 'PG2', 'PG3', 'PG4', 'PG5', 'PG6', 'PG7', 'PG8', 'PG9', 'PG10', 'PG11', 'PG12', 'PG13', 'PG14', 'PG15',
+            'PH0', 'PH1', 
+        ]
+
         stm_tim_chnl:List = FMKTIM_CodeGen.get_tim_chnl_used()
+        cpu_family = FMKCPU_CodeGen.get_ecu_family()
+
+        if cpu_family == 'H7': 
+            adc_vref = 'ADC_3'
+            stm_pin_used = ['PA14', 'PA13', 'PA15', 'PH0','PH1' ]
+            stm_pin_used_available = stm_pin_used_available_h7
+        else:
+            adc_vref = "ADC_1"
+            stm_pin_used = ['PA14', 'PA13', 'PA15', 'PC0', 'PC1']
+            stm_pin_used_available = stm_pin_used_available_g4
         stm_pwm_chl_use = []
         stm_freq_chnl_use = []
         max_pin_per_gpio: int = 0
@@ -218,7 +245,7 @@ class FMKIO_CodeGen():
             if sig_name in stm_pin_used:
                 raise GPIO_AlreadyConfgigured(f"{sig_name} has already been configured") 
             
-            if 'ADC_1' in pin_ana_cfg[2] and pin_ana_cfg[3] in ['ADC_CHANNEL_16', 'ADC_CHANNEL_18']:
+            if adc_vref in pin_ana_cfg[2] and pin_ana_cfg[3] in ['ADC_CHANNEL_16', 'ADC_CHANNEL_18', 'ADC_CHANNEL_17']:
                 raise ValueError(f'For ADC_1, {pin_ana_cfg[3]} channel cannot be used cause already use for Vbat or Vreference') 
 
             sig_in_ana.append(sig_name)
@@ -349,7 +376,7 @@ class FMKIO_CodeGen():
                 try:
                     letter_idx_tim = 2 * int(LETTER_LIST.index(str(pin_pwm_cfg[3])[-1])) + 1
                     chnl = int(str(pin_pwm_cfg[4])[-1])
-                    itline_idx = letter_idx_tim * chnl
+                    itline_idx = letter_idx_tim + int(chnl / 2)
                     itline = f'{ENUM_ROOT_HR_LINE}_{itline_idx}'
                 except(TypeError):
                     raise TypeError(f'Cfg error -> {pin_pwm_cfg[4]} or {pin_pwm_cfg[3]}')
@@ -376,6 +403,15 @@ class FMKIO_CodeGen():
                     + f'{ENUM_ROOT_TIM_ORGN}_{str(pin_pwm_cfg[5]).upper()}'\
                     + "}," +  " " * (5 - len(f"{pin_pwm_cfg[4][8:]}")) \
                     + f"// {ENUM_OUTSIGPWM_ROOT}_{idx + 1},\n"
+            
+            for idx_other, other_info_pwm in enumerate(OutPWM_astr[1:]):
+                if idx_other != idx and other_info_pwm[3] == pin_pwm_cfg[3]:
+                    if optional_desc_pwm[idx] == "":
+                        optional_desc_pwm[idx] = 'WARNING, this pwm share frequency with '
+                    
+                    optional_desc_pwm[idx]+= f'SIGPWM{idx_other + 1},'
+
+
         var_OutPWM += "    };\n\n" 
         #-----------------------------------------------------------
         #-----------------make OutDig cfg variable-------------------
@@ -401,6 +437,59 @@ class FMKIO_CodeGen():
                         + " " * (5 - len(f"{pin_dig_cfg[1][4:]}")) \
                         + f"// {ENUM_OUTSIGDIG_ROOT}_{idx + 1},\n"
         var_OutDig += "    };\n\n"
+
+        #-----------------------------------------------------------
+        #-----------------make Encoder cfg--------------------------
+        #-----------------------------------------------------------
+        const_ecdr += "    ///@brief Variable for bsp_Gpio_Pin Encoder mapping */\n" \
+                    + "    const t_sFMKIO_BspEcdrCfg c_FmkIo_InEcdrSigBspCfg_as[FMKIO_INPUT_ENCODER_NB] =  {\n"
+        for idx, ecdr_cfg in enumerate(encdr_cfg_astr):
+            # first check that channel 1 and 1 are beeing used 
+            parts = str(ecdr_cfg[5]).replace(" ", "").split(',')
+
+            channel_1 = parts[0]
+            channel_2 = parts[1] if len(parts) > 1 else None
+            if channel_1 != 'CHANNEL_1' or channel_2 not in ['CHANNEL_2', None]:
+                raise GPIO_ConfgigError('For  encoder, only channel 1 and 2 autorized, please change your pin')
+            
+            if channel_2 != None:
+                TI1_pin = str(f"P{ecdr_cfg[0][5:]}{ecdr_cfg[1][4:]}")
+                TI2_pin = str(f"P{ecdr_cfg[2][5:]}{ecdr_cfg[3][4:]}")
+                TI1_gpio = ecdr_cfg[0][5:]
+                TI2_gpio = ecdr_cfg[2][5:]
+                if (TI1_pin in stm_pin_used 
+                or TI2_pin in stm_pin_used):
+                    raise GPIO_AlreadyConfgigured(f"{RxPin} or {TxPin} has already been configured")
+                
+                ecdr_sig.append([TI1_pin, TI2_pin])
+                stm_pin_used.append(TI1_pin)
+                stm_pin_used.append(TI2_pin)
+                TI1_pin = ecdr_cfg[1][4:]
+                TI2_pin = ecdr_cfg[3][4:]
+            else:
+                TI1_pin = str(f"P{ecdr_cfg[0][5:]}{ecdr_cfg[1][4:]}")
+                TI2_pin = "NB"
+                TI1_gpio = ecdr_cfg[0][5:]
+                TI2_gpio = "NB"
+                ecdr_sig.append([TI1_pin, "NOT_USED"])
+                stm_pin_used.append(TI1_pin)
+
+
+            it_line = FMKTIM_CodeGen.get_itline_from_timcnl(f'{ENUM_FMKTIM_TIMER_ROOT}_{ecdr_cfg[4][6:]}', f'{ENUM_FMKTIM_CHANNEL_ROOT}_1')
+            
+            const_ecdr += '        {' + '{' + f'{ENUM_GPIO_PORT_ROOT}_{TI1_gpio},' \
+                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{TI1_gpio}")) \
+                    + f"{ENUM_GPIO_PIN_ROOT}_{TI1_pin}" + "}," \
+                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PIN_ROOT}_{TI1_pin}")) \
+                    + '{' + f'{ENUM_GPIO_PORT_ROOT}_{TI2_gpio},'\
+                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{TI2_gpio}")) \
+                    + f"{ENUM_GPIO_PIN_ROOT}_{TI2_pin}" + "}," \
+                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{TI2_pin}")) \
+                    + f'{ecdr_cfg[6]},'\
+                    +    " " * (SPACE_VARIABLE - len(f"{ecdr_cfg[6]}")) \
+                    + f'{it_line}' + '},' + f' // {ENUM_FMKIO_ECDR_ROOT}_{(idx + 1)}' \
+                    + '\n'
+        const_ecdr += '    };\n'
         #-----------------------------------------------------------
         #-----------------make Serial cfg--------------------------
         #-----------------------------------------------------------
@@ -410,25 +499,42 @@ class FMKIO_CodeGen():
         serial_sig = []
 
         for idx, serial_cfg in enumerate(SigSerial_astr):
-            RxPin = str(f"P{serial_cfg[4][5:]}{serial_cfg[5][4:]}")
-            TxPin = str(f"P{serial_cfg[6][5:]}{serial_cfg[7][4:]}")
-            if (RxPin in stm_pin_used
-            or TxPin in stm_pin_used):
-                raise GPIO_AlreadyConfgigured(f"{RxPin} or {TxPin} has already been configured")
+            if serial_cfg[4] == None or serial_cfg[5] == None\
+                  or serial_cfg[6] == None or serial_cfg[7] == None:
+                print(f"[WARNING] : Serial Line {idx + 1} will not be attributed, don't use it")
+                RxPin = "NB"
+                TxPin = "NB"
+                RxGPIO = "NB"
+                TxGPIO = "NB"
+                alternate_func = 'FMKIO_AF_UNUSED'
+                serial_sig.append(["NOT USED", "NOT USED"])
+            else:
+                RxPin = str(f"P{serial_cfg[4][5:]}{serial_cfg[5][4:]}")
+                TxPin = str(f"P{serial_cfg[6][5:]}{serial_cfg[7][4:]}")
+                RxGPIO = serial_cfg[4][5:]
+                TxGPIO = serial_cfg[6][5:]
+                alternate_func = serial_cfg[8]
 
-            serial_sig.append([RxPin, TxPin])
-            stm_pin_used.append(TxPin)
-            stm_pin_used.append(RxPin)
+                if (RxPin in stm_pin_used
+                or TxPin in stm_pin_used):
+                    raise GPIO_AlreadyConfgigured(f"{RxPin} or {TxPin} has already been configured")
 
-            const_serial += '        {' + '{' + f'{ENUM_GPIO_PORT_ROOT}_{serial_cfg[4][5:]},' \
-                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{serial_cfg[4][5:]}")) \
-                    + f"{ENUM_GPIO_PIN_ROOT}_{serial_cfg[5][4:]}" + "}," \
-                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PIN_ROOT}_{serial_cfg[5][4:]}")) \
-                    + '{' + f'{ENUM_GPIO_PORT_ROOT}_{serial_cfg[6][5:]},'\
-                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{serial_cfg[6][5:]}")) \
-                    + f"{ENUM_GPIO_PIN_ROOT}_{serial_cfg[7][4:]}" + "}," \
-                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{serial_cfg[7][4:]}")) \
-                    + f'{serial_cfg[8]}' + '},' + f' // {ENUM_FMKIO_SERIAL_ROOT}_{(idx + 1)}' \
+                serial_sig.append([RxPin, TxPin])
+                stm_pin_used.append(TxPin)
+                stm_pin_used.append(RxPin)
+                RxPin = str(f"{serial_cfg[5][4:]}")
+                TxPin = str(f"{serial_cfg[7][4:]}")
+
+
+            const_serial += '        {' + '{' + f'{ENUM_GPIO_PORT_ROOT}_{RxGPIO},' \
+                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{RxGPIO}")) \
+                    + f"{ENUM_GPIO_PIN_ROOT}_{RxPin}" + "}," \
+                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PIN_ROOT}_{RxPin}")) \
+                    + '{' + f'{ENUM_GPIO_PORT_ROOT}_{TxGPIO},'\
+                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{TxGPIO}")) \
+                    + f"{ENUM_GPIO_PIN_ROOT}_{TxPin}" + "}," \
+                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{TxPin}")) \
+                    + f'{alternate_func}' + '},' + f' // {ENUM_FMKIO_SERIAL_ROOT}_{(idx + 1)}' \
                     + '\n'
         const_serial += '    };\n'
         #-----------------------------------------------------------
@@ -463,6 +569,10 @@ class FMKIO_CodeGen():
         #-----------------------------------------------------------
         #----------------------make enum signal---------------------
         #-----------------------------------------------------------
+        enum_ecdr = cls.code_gen.make_enum_from_variable(ENUM_FMKIO_ECDR_ROOT, [str(idx+1) for idx in range(len(encdr_cfg_astr))],
+                                                        't_eFMKIO_InEcdrSignals', 0, 'List of signals used for Input Encoder',
+                                                        [f'TI1 -> {value[0]}, TI2 -> {value[1]}, Reference to Encoder {idx + 1}' for idx,value in enumerate(ecdr_sig)])
+        
         enum_can = cls.code_gen.make_enum_from_variable(ENUM_FMKIO_CAN_ROOT, [str(idx+1) for idx in range(len(SigCan_astr[1:]))],
                                                         't_eFMKIO_ComSigCan', 0, 'List of signals used for CAN communication',
                                                         [f'Rx -> {value[0]}, Tx -> {value[1]}, Reference to CAN {idx}' for idx,value in enumerate(can_sig)])
@@ -490,8 +600,12 @@ class FMKIO_CodeGen():
         enum_OutDig = cls.code_gen.make_enum_from_variable(ENUM_OUTSIGDIG_ROOT, [str(idx + 1) for idx in range((len(OutDig_astr[1:])))],
                                                             "t_eFMKIO_OutDigSig", 0, "List of output digital pin available on this board",
                                                             [f'Reference to {sig_name}' for sig_name in sig_out_dig])
-        for info_pwm in OutPWM_astr[1:]:
-            desc_pwm.append(DESCRIP_PWM[str(info_pwm[5])]) 
+        for idx, info_pwm in enumerate(OutPWM_astr[1:]):
+            desc_pwm.append(DESCRIP_PWM[str(info_pwm[5])])
+
+            if optional_desc_pwm[idx] != "":
+                desc_pwm[idx] += '\n' +  "                                                            "\
+                                 + optional_desc_pwm[idx]
         
         enum_OutPWM = cls.code_gen.make_enum_from_variable(ENUM_OUTSIGPWM_ROOT, [str(idx + 1) for idx in range((len(OutPWM_astr[1:])))],
                                                             "t_eFMKIO_OutPwmSig", 0, "List of output PWM pin available on this board",
@@ -505,6 +619,7 @@ class FMKIO_CodeGen():
         cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE,TARGET_T_VARIABLE_END_LINE)
         cls.code_gen._write_into_file(const_serial, FMKIO_CONFIGPRIVATE_PATH)
         cls.code_gen._write_into_file(const_can, FMKIO_CONFIGPRIVATE_PATH)
+        cls.code_gen._write_into_file(const_ecdr, FMKIO_CONFIGPRIVATE_PATH)
         cls.code_gen._write_into_file(var_OutPWM, FMKIO_CONFIGPRIVATE_PATH)
         cls.code_gen._write_into_file(var_OutDig, FMKIO_CONFIGPRIVATE_PATH)
         cls.code_gen._write_into_file(var_InEvnt, FMKIO_CONFIGPRIVATE_PATH)
@@ -521,6 +636,7 @@ class FMKIO_CodeGen():
         cls.code_gen._write_into_file(enum_OutPWM, FMKIO_ConfigPublic_PATH)
         cls.code_gen._write_into_file(enum_OutDig, FMKIO_ConfigPublic_PATH)
         cls.code_gen._write_into_file(enum_InEvnt, FMKIO_ConfigPublic_PATH)
+        cls.code_gen._write_into_file(enum_ecdr, FMKIO_ConfigPublic_PATH)
         cls.code_gen._write_into_file(enum_InFreq, FMKIO_ConfigPublic_PATH)
         cls.code_gen._write_into_file(enum_InAna, FMKIO_ConfigPublic_PATH)
         cls.code_gen._write_into_file(enum_InDig, FMKIO_ConfigPublic_PATH)

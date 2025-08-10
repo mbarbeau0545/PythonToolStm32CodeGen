@@ -81,18 +81,14 @@ class FMKTIM_CodeGen():
 
         cls.code_gen.load_excel_file(f_hw_cfg)
         timer_cfg_a     = cls.code_gen.get_array_from_excel("GI_Timer")
-        evnt_cfg_a      = cls.code_gen.get_array_from_excel("FMKTIM_EvntTimer")
-        list_irqn_hdler = cls.code_gen.get_array_from_excel('FMKTIM_IRQNHandler')[1:]
 
        
 
         enum_channel = ""
         enum_timer = ""
         enum_evnt = ""
-        var_evntcfg   = ""
         var_timcfg = ""
         const_mapp_chnl_itline = ""
-
         const_mapp_evnt_tim = ""
         const_mapp_gp_tim = ""
         const_mapp_dac_tim = ""
@@ -104,7 +100,7 @@ class FMKTIM_CodeGen():
         def_tim_max_chnl = ""
         var_tim_max_chnl = ""
         max_channel: int = 0
-        nb_evnt_channel = len(evnt_cfg_a[1:])
+        nb_evnt_channel = 0
         timer_number_a = []
         
        
@@ -147,9 +143,8 @@ class FMKTIM_CodeGen():
                 max_channel = timer_cfg[1]
 
         for idx, timer_cfg in enumerate(timer_cfg_a[1:]):
-            idx_timer = str(timer_cfg[0][6:])
+            idx_timer = str(timer_cfg[0][3:])
             timer_number_a.append(idx_timer)
-            
 
             var_timcfg += f'        [{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer}] = ' + '{\n'\
                         + f"        .bspIstc_ps = TIM{idx_timer},\n" \
@@ -170,65 +165,70 @@ class FMKTIM_CodeGen():
                             + " " * (SPACE_VARIABLE - len(f"{ENUM_FKCPU_SYS_CLK}_{timer_cfg[4]}")) \
                             + f' // {ENUM_FMKTIM_TIMER_ROOT}_{idx_timer}\n'
             const_mapp_chnl_itline += f'        [{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer}] = ' + '{\n'
-            # make timer public enum 
-            match  timer_cfg[3]:
-                case 'PWM/IC/OC/OP':
-                    
-                    suffix_pg_tim.extend([f"{idx_tim_pg}{i}" for i in range(1, (timer_cfg[1] +1))])
-                    description_pg_tim.extend(f"General Purpose Timer, Reference to Timer {idx_timer} Channel {channel}" for channel in range(1, (timer_cfg[1] +1)))
-                    
-                    for channel in range(1, (timer_cfg[1] +1)):
-                        const_mapp_gp_tim += "        {" + f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer},"  \
-                                        + " " * (SPACE_VARIABLE - len(f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer}")) \
-                                        + f"        {ENUM_FMKTIM_CHANNEL_ROOT}_{channel}" \
-                                        + "}," + f"    // {ENUM_FMKTIM_IT_EVNT_ROOT}_{idx_tim_pg}{channel}\n"
+            # make timer public enum
+            channel = 0 
+            if idx_timer == '6':
+                print('[WARNING] Timer 6 detected, use to generate SysTick, this timer will not be used...')
+            else:
+                match  str(timer_cfg[3]).upper():
+                    case 'PWM/IC/OC/OP':
                         
-                        const_mapp_chnl_itline += '            {'  + f'{ENUM_FMKTIM_IT_TYPE_ROOT}_IO,'\
-                                                + ' ' * (50 - len(f"{ENUM_FMKTIM_IT_TYPE_ROOT}_IO")) \
-                                                + f'{ENUM_FMKTIM_IT_GP_ROOT}_{idx_tim_pg}{channel}' + '},'  + f"    // {ENUM_FMKTIM_IT_GP_ROOT}_{idx_tim_pg}{channel}\n"
-
-                        # for fmkio
-                        cls.itline_timchnl_mapping[str(f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer}{ENUM_FMKTIM_CHANNEL_ROOT}_{channel}")] =  f"{ENUM_FMKTIM_IT_GP_ROOT}_{idx_tim_pg}{channel}"
-                    # update idx   
-                    idx_tim_pg +=1
-                    
-                case 'DAC':
-                    suffix_dac_tim.extend(f"{int(idx_dac_tim + i)}" for i in range(0, (timer_cfg[1])))
-                    description_dac_tim.extend(f"Dac Purpose Timer, Reference to Timer {idx_timer} Channel {channel}" for channel in range(1, (timer_cfg[1] +1)))
-
-                    for channel in range(1, (timer_cfg[1] +1)):
-                        const_mapp_dac_tim += "        {" + f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer},"  \
-                                            + " " * (SPACE_VARIABLE - len(f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer},")) \
+                        suffix_pg_tim.extend([f"{idx_tim_pg}{i}" for i in range(1, (timer_cfg[1] +1))])
+                        description_pg_tim.extend(f"General Purpose Timer, Reference to Timer {idx_timer} Channel {channel}" for channel in range(1, (timer_cfg[1] +1)))
+                        
+                        for channel in range(1, (timer_cfg[1] +1)):
+                            const_mapp_gp_tim += "        {" + f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer},"  \
+                                            + " " * (SPACE_VARIABLE - len(f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer}")) \
                                             + f"        {ENUM_FMKTIM_CHANNEL_ROOT}_{channel}" \
-                                            + "}," + f"    // {ENUM_FMKTIM_IT_DAC_ROOT}_{idx_dac_tim}\n"
-                        # for fmkio
-                        cls.itline_timchnl_mapping[str(f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer}{ENUM_FMKTIM_CHANNEL_ROOT}_{channel}")] =  f"{ENUM_FMKTIM_IT_DAC_ROOT}_{idx_dac_tim}"
+                                            + "}," + f"    // {ENUM_FMKTIM_IT_GP_ROOT}_{idx_tim_pg}{channel}\n"
+                            
+                            const_mapp_chnl_itline += '            {'  + f'{ENUM_FMKTIM_IT_TYPE_ROOT}_IO,'\
+                                                    + ' ' * (50 - len(f"{ENUM_FMKTIM_IT_TYPE_ROOT}_IO")) \
+                                                    + f'{ENUM_FMKTIM_IT_GP_ROOT}_{idx_tim_pg}{channel}' + '},'  + f"    // {ENUM_FMKTIM_IT_GP_ROOT}_{idx_tim_pg}{channel}\n"
 
-                        const_mapp_chnl_itline += '            {'  + f'{ENUM_FMKTIM_IT_TYPE_ROOT}_DAC,'\
-                                                + ' ' * (50 - len(f"{ENUM_FMKTIM_IT_TYPE_ROOT}_DAC,")) \
-                                                + f'{ENUM_FMKTIM_IT_DAC_ROOT}_{idx_dac_tim}' + '},' + f"    // {ENUM_FMKTIM_IT_DAC_ROOT}_{idx_dac_tim}\n"
-                    idx_dac_tim = idx_dac_tim + timer_cfg[1]
+                            # for fmkio
+                            cls.itline_timchnl_mapping[str(f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer}{ENUM_FMKTIM_CHANNEL_ROOT}_{channel}")] =  f"{ENUM_FMKTIM_IT_GP_ROOT}_{idx_tim_pg}{channel}"
+                        # update idx   
+                        idx_tim_pg +=1
+                        
+                    case 'DAC':
+                        suffix_dac_tim.extend(f"{int(idx_dac_tim + i)}" for i in range(0, (timer_cfg[1])))
+                        description_dac_tim.extend(f"Dac Purpose Timer, Reference to Timer {idx_timer} Channel {channel}" for channel in range(1, (timer_cfg[1] +1)))
 
-                case 'EVENT':
-                    suffix_evnt_tim.extend(f"{int(idx_tim_evnt + i)}" for i in range(0, (timer_cfg[1])))
-                    description_evnt_tim.extend(f"Event Purpose Timer, Reference to Timer {idx_timer} Channel {channel}" for channel in range(1, (timer_cfg[1] +1)))
-                    for channel in range(1, (timer_cfg[1] +1)):
+                        for channel in range(1, (timer_cfg[1] +1)):
+                            const_mapp_dac_tim += "        {" + f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer},"  \
+                                                + " " * (SPACE_VARIABLE - len(f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer},")) \
+                                                + f"        {ENUM_FMKTIM_CHANNEL_ROOT}_{channel}" \
+                                                + "}," + f"    // {ENUM_FMKTIM_IT_DAC_ROOT}_{idx_dac_tim}\n"
+                            # for fmkio
+                            cls.itline_timchnl_mapping[str(f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer}{ENUM_FMKTIM_CHANNEL_ROOT}_{channel}")] =  f"{ENUM_FMKTIM_IT_DAC_ROOT}_{idx_dac_tim}"
+
+                            const_mapp_chnl_itline += '            {'  + f'{ENUM_FMKTIM_IT_TYPE_ROOT}_DAC,'\
+                                                    + ' ' * (50 - len(f"{ENUM_FMKTIM_IT_TYPE_ROOT}_DAC,")) \
+                                                    + f'{ENUM_FMKTIM_IT_DAC_ROOT}_{idx_dac_tim}' + '},' + f"    // {ENUM_FMKTIM_IT_DAC_ROOT}_{idx_dac_tim}\n"
+                        idx_dac_tim = idx_dac_tim + timer_cfg[1]
+
+                    case 'EVENT':
+                        channel += 1
+                        nb_evnt_channel +=1
+                        suffix_evnt_tim.append(f"{nb_evnt_channel}")
+                        description_evnt_tim.append(f" Reference to timer {idx_timer}, CHANNEL_1")
                         const_mapp_evnt_tim += "        {" + f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer},"  \
                                             + " " * (SPACE_VARIABLE - len(f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer},")) \
-                                            + f"        {ENUM_FMKTIM_CHANNEL_ROOT}_{channel}"\
-                                            + "}," + f"    // {ENUM_FMKTIM_IT_EVNT_ROOT}_{idx_tim_evnt}\n"
+                                            + f"        {ENUM_FMKTIM_CHANNEL_ROOT}_1"\
+                                            + "}," + f"    // {ENUM_FMKTIM_IT_EVNT_ROOT}_1\n"
 
                         const_mapp_chnl_itline +=  '            {'  + f'{ENUM_FMKTIM_IT_TYPE_ROOT}_EVNT,'\
                                                 + ' ' * (50 - len(f'{ENUM_FMKTIM_IT_TYPE_ROOT}_EVNT,')) \
-                                                + f'{ENUM_FMKTIM_IT_EVNT_ROOT}_{idx_tim_evnt}' + '},' + f"    // {ENUM_FMKTIM_IT_EVNT_ROOT}_{idx_tim_evnt}\n"
-                        
+                                                + f'{ENUM_FMKTIM_IT_EVNT_ROOT}_{nb_evnt_channel}' + '},' + f"    // {ENUM_FMKTIM_IT_EVNT_ROOT}_{nb_evnt_channel}\n"
+                            
                         # for fmkio
                         cls.itline_timchnl_mapping[str(f"{ENUM_FMKTIM_TIMER_ROOT}_{idx_timer}{ENUM_FMKTIM_CHANNEL_ROOT}_{channel}")] =  f"{ENUM_FMKTIM_IT_EVNT_ROOT}_{idx_tim_evnt}"
 
-                    idx_tim_evnt = idx_tim_evnt + timer_cfg[1]
+                        idx_tim_evnt = idx_tim_evnt + timer_cfg[1]
 
-                # complete mapp_chnl_itline with default value if the timer has x channels, x < max_channel
-            for channel_left in range(max_channel - channel):
+            # complete mapp_chnl_itline with default value if the timer has x channels, x < max_channel
+            for ___ in range(max_channel - channel):
                  const_mapp_chnl_itline +=  '            {'  + f'{ENUM_FMKTIM_IT_TYPE_ROOT}_NB,'\
                                                 + ' ' * (50 - len(f"{ENUM_FMKTIM_IT_TYPE_ROOT}_NB")) \
                                                 + f'FMKTIM_INTERRUPT_LINE_UNUSED' + '},' + f"    // NOT AVAILABLE ON HARDWARE\n"
@@ -243,22 +243,6 @@ class FMKTIM_CodeGen():
         const_mapp_dac_tim += "    };\n\n"
         const_mapp_chnl_itline += '    };\n\n'
 
-        enum_it_lines_gp = cls.code_gen.make_enum_from_variable(ENUM_FMKTIM_IT_GP_ROOT, suffix_pg_tim,
-                                                                't_eFMKTIM_InterruptLineIO', 0, "Number of General Purpose Interrupt Line, for PWM, Input-Compare, Output Compare, One sPulse",
-                                                                description_pg_tim)
-        
-        enum_it_lines_evnt = cls.code_gen.make_enum_from_variable(ENUM_FMKTIM_IT_EVNT_ROOT, suffix_evnt_tim,
-                                                                't_eFMKTIM_InterruptLineEvnt', 0, "Number of Event Purpose Interrupt Line",
-                                                                description_evnt_tim)
-        
-        enum_it_lines_dac = cls.code_gen.make_enum_from_variable(ENUM_FMKTIM_IT_DAC_ROOT, suffix_dac_tim,
-                                                                't_eFMKTIM_InterruptLineDAC', 0, "Number of DAC Purpose Interrupt Line",
-                                                                description_dac_tim)
-
-        enum_timer = cls.code_gen.make_enum_from_variable(ENUM_FMKTIM_TIMER_ROOT, timer_number_a,
-                                                           "t_eFMKTIM_Timer", 0, "Number of timer enable in smt32xxx board",
-                                                           [f"Reference for HAL timer{timer_cfg[0][5:]}, this timer has {timer_cfg[1]} channel(s)" for timer_cfg in timer_cfg_a][1:])
-        
         enum_channel += "    /**< Number max of channel enable by timer */\n" \
                         + '     typedef enum\n    {\n'
         for idx in range(max_channel):
@@ -277,42 +261,56 @@ class FMKTIM_CodeGen():
         #----------------------------------------------------------------
         #-------------------make IRQN HANDLER DECALRATION----------------
         #----------------------------------------------------------------
-        for irqn_handler in list_irqn_hdler:
+        irnq_list_treated = []
+        for timer_info in timer_cfg_a[1:]:
+            irqn_handler = timer_info[2]
+
+            if irqn_handler in irnq_list_treated:
+                continue
+
+            timer = timer_info[0]
             # found the timer number
-            idx_nb_tim = int(str(irqn_handler[1]).index('_')+ 1)
-            func_imple += '/*********************************\n' \
-                        + f' * {irqn_handler[0]}\n' \
-                        + '*********************************/\n' \
-                        + f'void {irqn_handler[0]}(void)' \
-                        + " " * (42 - len(f'void {irqn_handler[0]}(void)')) \
-                        + '{' + f'return HAL_TIM_IRQHandler(FMKTIM_PRIVATE_GetHandleTypeDef((t_uint8){ENUM_FMKTIM_TIMER_ROOT}_{str(irqn_handler[1])[idx_nb_tim:]}));' + '}\n'
+            idx_nb_tim = int(str(timer).index('M')+ 1)
+
+            codgen_irqn_handler_call = f"        HAL_TIM_IRQHandler(FMKTIM_PRIVATE_GetHandleTypeDef((t_uint8){ENUM_FMKTIM_TIMER_ROOT}_{str(timer)[idx_nb_tim:]}));\n"
+            # check if other timer use this irqn_handler 
+            for other_tim_info in timer_cfg_a[1:]:
+                if timer_info[0] != other_tim_info[0]:
+                    if other_tim_info[2] == irqn_handler:
+                        other_idx_tim = int(str(other_tim_info[0]).index('M')+ 1)
+                        codgen_irqn_handler_call += f"        HAL_TIM_IRQHandler(FMKTIM_PRIVATE_GetHandleTypeDef((t_uint8){ENUM_FMKTIM_TIMER_ROOT}_{str(other_tim_info[0])[other_idx_tim:]}));\n"
+
+            
+            func_imple += '    /*********************************\n' \
+                        + f'    * {irqn_handler[:-4]}IRQHandler\n' \
+                        + '    *********************************/\n' \
+                        + f'   void {irqn_handler[:-4]}IRQHandler(void)\n'\
+                        + "    {\n"\
+                        +f"{codgen_irqn_handler_call}"\
+                        + '        return;\n'\
+                        + "    }\n"
+            
+            irnq_list_treated.append(irqn_handler)
         #----------------------------------------------------------------
         #-----------------------------make var evnt cfg------------------
         #-----------------------------make eenum evnt channel------------
         #----------------------------------------------------------------
-        var_evntcfg += "    /**< Hardware configuration for Event Period Timer */\n" \
-                        + "    const t_sFMKTIM_BspTimerCfg c_FMKTIM_EvntTimerCfg_as[FMKTIM_EVENT_CHANNEL_NB] = {\n"
-        var_evntcfg += "      //" 
-        for elem_desc in evnt_cfg_a[0]:
-            var_evntcfg += f"{elem_desc}" + " " * (SPACE_VARIABLE - len(elem_desc))
-        var_evntcfg += "\n"
-        for idx, evnt_cfg in enumerate(evnt_cfg_a[1:]):
-            if str(evnt_cfg[0] + evnt_cfg[1]) in cls.stm_tim_chnl:
-                raise TimerCfg_alreadyUsed(f" the timer {evnt_cfg[0]} and his channel {evnt_cfg[1]} has already been configured")
-            
-            cls.stm_tim_chnl.append(str(evnt_cfg[0] + evnt_cfg[1]))
-            var_evntcfg += "    {" \
-                        + f"{ENUM_FMKTIM_TIMER_ROOT}_{evnt_cfg[0][6:]}," \
-                        +" " * (SPACE_VARIABLE - len(f"{ENUM_FMKTIM_TIMER_ROOT}_{evnt_cfg[0][5:]}")) \
-                        + f"{ENUM_FMKTIM_CHANNEL_ROOT}_{evnt_cfg[1][8:]}" + "}," \
-                        + f"  // {ENUM_FMKTIM_EVENT_ROOT}_{idx+1}\n"
-        var_evntcfg += "    };\n\n"
+        enum_it_lines_gp = cls.code_gen.make_enum_from_variable(ENUM_FMKTIM_IT_GP_ROOT, suffix_pg_tim,
+                                                                't_eFMKTIM_InterruptLineIO', 0, "Number of General Purpose Interrupt Line, for PWM, Input-Compare, Output Compare, One sPulse",
+                                                                description_pg_tim)
+        
+        enum_it_lines_evnt = cls.code_gen.make_enum_from_variable(ENUM_FMKTIM_IT_EVNT_ROOT, suffix_evnt_tim,
+                                                                't_eFMKTIM_InterruptLineEvnt', 0, "Number of Event Purpose Interrupt Line",
+                                                                description_evnt_tim)
+        
+        enum_it_lines_dac = cls.code_gen.make_enum_from_variable(ENUM_FMKTIM_IT_DAC_ROOT, suffix_dac_tim,
+                                                                't_eFMKTIM_InterruptLineDAC', 0, "Number of DAC Purpose Interrupt Line",
+                                                                description_dac_tim)
 
-        enum_evnt += cls.code_gen.make_enum_from_variable(ENUM_FMKTIM_EVENT_ROOT, [str(int(idx + 1)) for idx in range(nb_evnt_channel)],
-                                                           "t_eFMKTIM_EventChannel", 0, "Number of cannel channel dedicate for timer_event configuration",
-                                                           [f"Event channel {idx}" for idx in range(nb_evnt_channel)])
-
-
+        enum_timer = cls.code_gen.make_enum_from_variable(ENUM_FMKTIM_TIMER_ROOT, timer_number_a,
+                                                           "t_eFMKTIM_Timer", 0, "Number of timer enable in smt32xxx board",
+                                                           [f"Reference for HAL timer{timer_cfg[0][3:]}, this timer has {timer_cfg[1]} channel(s)" for timer_cfg in timer_cfg_a][1:])
+        
         #-----------------------------------------------------------
         #------------code genration for FMKTIM module---------------
         #-----------------------------------------------------------
