@@ -407,7 +407,7 @@ class FMKIO_CodeGen():
             for idx_other, other_info_pwm in enumerate(OutPWM_astr[1:]):
                 if idx_other != idx and other_info_pwm[3] == pin_pwm_cfg[3]:
                     if optional_desc_pwm[idx] == "":
-                        optional_desc_pwm[idx] = 'WARNING, this pwm share frequency with '
+                        optional_desc_pwm[idx] = 'WARNING, this pwm share frequency and pulses with '
                     
                     optional_desc_pwm[idx]+= f'SIGPWM{idx_other + 1},'
 
@@ -446,13 +446,18 @@ class FMKIO_CodeGen():
         for idx, ecdr_cfg in enumerate(encdr_cfg_astr):
             # first check that channel 1 and 1 are beeing used 
             parts = str(ecdr_cfg[5]).replace(" ", "").split(',')
+            print(parts)
+            if len(parts) == 1 and parts[0] == 'None':
+                # no ecdr config
+                print('[INFO] : Detect 0 encoder configuration...')
+                continue
 
             channel_1 = parts[0]
-            channel_2 = parts[1] if len(parts) > 1 else None
-            if channel_1 != 'CHANNEL_1' or channel_2 not in ['CHANNEL_2', None]:
+            channel_2 = parts[1] if len(parts) > 1 else 'None'
+            if channel_1 != 'CHANNEL_1' or channel_2 not in ['CHANNEL_2', 'None']:
                 raise GPIO_ConfgigError('For  encoder, only channel 1 and 2 autorized, please change your pin')
             
-            if channel_2 != None:
+            if channel_2 != 'None':
                 TI1_pin = str(f"P{ecdr_cfg[0][5:]}{ecdr_cfg[1][4:]}")
                 TI2_pin = str(f"P{ecdr_cfg[2][5:]}{ecdr_cfg[3][4:]}")
                 TI1_gpio = ecdr_cfg[0][5:]

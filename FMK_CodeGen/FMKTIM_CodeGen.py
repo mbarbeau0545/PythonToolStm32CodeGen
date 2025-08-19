@@ -357,6 +357,7 @@ class FMKTIM_CodeGen():
         try: 
             retval_itline = cls.itline_timchnl_mapping[timer_chnl]
         except(KeyError):
+            print(cls.itline_timchnl_mapping)
             raise KeyError(f'Cannot found Interrupt line for {enum_timer} and {enum_channel}')
         
         return retval_itline
