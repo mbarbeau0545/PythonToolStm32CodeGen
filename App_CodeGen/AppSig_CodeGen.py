@@ -131,36 +131,38 @@ class AppSig_CodeGen():
 
         for signal_name, signal_cfg in cls.signal.items():
             codgen_sigCfg += '        {'\
-                            + f'(t_uint8){signal_cfg['length']},'\
-                            + ' ' * ((SIG_SPACE_VARIABLE) - len(f"{signal_cfg['length']},"))\
-                            + f'APPSIG_SIG_ENCODE_{str(signal_cfg['encoding']).upper()},'\
-                            + ' ' * ((SIG_SPACE_VARIABLE) - len(f"{signal_cfg['encoding']},"))\
-                            + f'(t_float32){signal_cfg['factor']}.0f,'\
+                            + f'(t_uint8){signal_cfg["length"]},'\
+                            + ' ' * ((SIG_SPACE_VARIABLE) - len(f'{signal_cfg["length"]},'))\
+                            + f'APPSIG_SIG_ENCODE_{str(signal_cfg["encoding"]).upper()},'\
+                            + ' ' * ((SIG_SPACE_VARIABLE) - len(f'{signal_cfg["encoding"]},'))\
+                            + f'(t_float32){signal_cfg["factor"]}.0f,'\
                             + ' ' * ((SIG_SPACE_VARIABLE) - len(f"{signal_cfg['factor']},"))\
-                            + f'(t_sint16){signal_cfg['offset']}'\
+                            + f'(t_sint16){signal_cfg["offset"]}'\
                             + ' ' * ((SIG_SPACE_VARIABLE) - len(f"{signal_cfg['offset']}"))\
                             + '},' + f'// APPSIG_SIGNAL_{str(signal_name).upper()}\n'
         codgen_sigCfg += '    };\n\n'
 
         codgen_canmsg_cfg += '    ///@brief CAN Message Information\n'\
-                        + '    const t_sAPPSIG_MsgInfo c_AppSig_CanMsgCfg_as[APPSIG_CAN_MSG_NB] = {\n'\
+                        + '    const t_sAPPSIG_MsgCfg c_AppSig_CanMsgCfg_as[APPSIG_CAN_MSG_NB] = {\n'\
                         +'    //  Identifier                                          Direction                                                CyclicSend                                                 TimeOut                                                         Sig Cfg                                         nbSignal\n'
         codgen_srlmsg_cfg += '    ///@brief Serial Message Information\n'\
-                            + '    const t_sAPPSIG_MsgInfo c_AppSig_SrlMsgCfg_as[APPSIG_SRL_MSG_NB] = {\n'\
+                            + '    const t_sAPPSIG_MsgCfg c_AppSig_SrlMsgCfg_as[APPSIG_SRL_MSG_NB] = {\n'\
                             + '    //  Identifier                                          Direction                                                CyclicSend                                                 TimeOut                                                         Sig Cfg                                         nbSignal\n'
         codgen_def_srlid += '    ///@brief Serial Message Id\n'
         codgen_def_canid += '    ///@brief CAN Message Id\n'
 
         for msg_name, msg_cfg in cls.symbol.items():
             msgid_hexvalue = hex(int(msg_cfg['msg_id'], 16))
-
+            if str(msg_cfg['cycle_time']) == 'None' or msg_cfg['cycle_time'] is None:
+                msg_cfg['cycle_time'] = 0
+                
             if msg_cfg['msg_type'] == 'SRL':
                 signal_number = len(msg_cfg['signals'].keys())
                 codgen_srlmsg_dcode += f'    ///@brief Variable for decoding {msg_name}\n'\
                                     + f'    const t_sAPPSIG_MsgSignalsCfg c_AppSig_Srl_{msg_name}_as[{signal_number}] = ' + '{\n'
                 
                 for signal_name, signal_startbit in msg_cfg['signals'].items():
-                    codgen_srlmsg_dcode += '    {'\
+                    codgen_srlmsg_dcode += '        {'\
                                         + f'APPSIG_SIGNAL_{str(signal_name).upper()},'\
                                         + ' ' * ((SIG_SPACE_VARIABLE) - len(f"APPSIG_SIGNAL_{signal_name},"))\
                                         + f'(t_uint8){signal_startbit}'\
@@ -174,14 +176,14 @@ class AppSig_CodeGen():
                                 + f'((t_uint32){msgid_hexvalue})\n'
                 
                 # make serial msg cfg
-                codgen_srlmsg_cfg += '    {'\
+                codgen_srlmsg_cfg += '        {'\
                                     + f'APPSIG_SRL_ID_{str(msg_name).upper()},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"APPSIG_SRL_ID_{str(msg_name).upper()}"))\
-                                    + f'{MSG_TYPE_MAPPING[msg_cfg['msg_direction']]},'\
+                                    + f'{MSG_TYPE_MAPPING[msg_cfg["msg_direction"]]},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"{MSG_TYPE_MAPPING[msg_cfg['msg_direction']]}"))\
-                                    + f'(t_uint16){msg_cfg['cycle_time']},'\
+                                    + f'(t_uint16){msg_cfg["cycle_time"]},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"(t_uint16){msg_cfg['cycle_time']}"))\
-                                    + f'(t_uint16){msg_cfg['timeout']},'\
+                                    + f'(t_uint16){msg_cfg["timeout"]},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"(t_uint16){msg_cfg['timeout']}"))\
                                     + f'c_AppSig_Srl_{msg_name}_as,'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"c_AppSig_Srl_{msg_name}_as"))\
@@ -211,11 +213,11 @@ class AppSig_CodeGen():
                 codgen_canmsg_cfg += '    {'\
                                     + f'APPSIG_CAN_ID_{str(msg_name).upper()},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"APPSIG_CAN_ID_{msg_name}"))\
-                                    + f'{MSG_TYPE_MAPPING[msg_cfg['msg_direction']]},'\
+                                    + f'{MSG_TYPE_MAPPING[msg_cfg["msg_direction"]]},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"{MSG_TYPE_MAPPING[msg_cfg['msg_direction']]}"))\
-                                    + f'(t_uint16){msg_cfg['cycle_time']},'\
+                                    + f'(t_uint16){msg_cfg["cycle_time"]},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"(t_uint16){msg_cfg['cycle_time']}"))\
-                                    + f'(t_uint16){msg_cfg['timeout']},'\
+                                    + f'(t_uint16){msg_cfg["timeout"]},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"(t_uint16){msg_cfg['timeout']}"))\
                                     + f'c_AppSig_Can_{msg_name}_as,'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"c_AppSig_Can_{msg_name}_as"))\
@@ -223,7 +225,7 @@ class AppSig_CodeGen():
                                     + f' // APPSIG_CAN_{str(msg_name).upper()}\n'
                 
             else:
-                raise ValueError(f'Unknown type of message {msg_cfg['msg_type']}')
+                raise ValueError(f'Unknown type of message {msg_cfg["msg_type"]}')
         codgen_srlmsg_cfg += '    };\n\n'
         codgen_canmsg_cfg += '    };\n\n'
 
@@ -263,24 +265,30 @@ class AppSig_CodeGen():
         current_type = None
         current_len = None
         current_symbol = None
+        previous_read:str = ""
 
         with open(cls.file_cfg_path, 'r') as file:
             for line in file.readlines():
                 line = line.strip()
 
                 if "ENUMS" in line:
+                    previous_read = current_read
                     current_read = 'ENUMS'
                     continue
                 elif "SIGNALS" in line:
+                    previous_read = current_read
                     current_read = 'SIGNALS'
                     continue
                 elif "SENDRECEIVE" in line:
+                    previous_read = current_read
                     current_read = 'SENDRECEIVE'
                     continue
                 elif "RECEIVE" in line:
+                    previous_read = current_read
                     current_read = 'RECEIVE'
                     continue
                 elif "SEND" in line:
+                    previous_read = current_read
                     current_read = 'SEND'
                     continue
 
@@ -319,7 +327,8 @@ class AppSig_CodeGen():
 
                     case 'SEND' | 'RECEIVE' | 'SENDRECEIVE':
                         if line.startswith('['):  # Ex: [Symbol1]
-                            if waiting_for_timeout  == True and current_read != 'SEND':
+                            if waiting_for_timeout  == True\
+                                and current_read != 'SEND' and previous_read != 'SEND':
                                 raise ValueError(f"Missing Timeout for symbol {current_symbol}")
 
                             current_symbol = line.strip().strip('[]')

@@ -76,20 +76,27 @@ class AppSpm_CodeGen():
             enum_prm = cls.code_gen.make_enum_from_variable(APPSPM_ENUM_ROOT_PARAM, [],
                                                                 "t_eAPPSPM_ItemPrm", 0, "Enum for listong every parameter",
                                                                 [])
-        
-        var_prm += "    /**< Variable for System Parameter Inforamtion*/\n" \
+        var_prm += "    ///@brief Variable for System Parameter Inforamtion\n" \
                     + f"    const t_sAPPSPM_ItemPrmCfg c_AppSpm_ItemPrmInfo_as[{APPSPM_ENUM_ROOT_PARAM}_NB] =" + "{\n"
-        var_prm += '    //itemId_u8                     version_u8                   minItemVal_u16                maxItemVal_u16                 DefaultItemVal_u16\n'
+        var_prm += '    //version_u8                   minItemVal_u16                maxItemVal_u16                 DefaultItemVal_u16\n'
         for item_cfg in item_prm_a:
-            var_prm += '    {' + f'(t_uint8){item_cfg[0]},'\
-                    + " " * ((SPACE_VARIABLE) - len(f"(t_uint8){item_cfg[0]}"))\
+            if item_cfg[6] is None:
+                signal_related = "APPSIG_SIGNAL_NB"
+            else: 
+                signal_related = f"APPSIG_SIGNAL_{item_cfg[6]}"
+            var_prm += '        {'\
                     + f'(t_uint8){item_cfg[2]},'\
                     + " " * ((SPACE_VARIABLE) - len(f"(t_uint8){item_cfg[2]}"))\
                     + f'(t_uint16){item_cfg[3]},'\
                     + " " * ((SPACE_VARIABLE) - len(f"(t_uint16){item_cfg[3]}"))\
                     + f'(t_uint16){item_cfg[4]},'\
                     + " " * ((SPACE_VARIABLE) - len(f"(t_uint16){item_cfg[4]}"))\
-                    + f'(t_uint16){item_cfg[5]}' + '},\n'
+                    + f'(t_uint16){item_cfg[5]},'\
+                    + " " * ((SPACE_VARIABLE) - len(f"(t_uint16){item_cfg[5]}"))\
+                    + f'{signal_related}' + '},'\
+                    + " " * ((50) - len(f"{signal_related}"))\
+                    + f' // {APPSPM_ENUM_ROOT_PARAM}_{item_cfg[1]}\n'
+            
             if f_is_uds_ope:
                 uds_item_prm["PARAMETERS"][str(item_cfg[1]).upper()] = {
                         'id' : f'{item_cfg[0]}',
@@ -98,8 +105,8 @@ class AppSpm_CodeGen():
                         'default' : f'{int(item_cfg[5])}',
                         'machine' : 0
                 }
-            
-        var_prm += '    };\n'
+        var_prm += '    };\n\n\n'
+
         if f_is_uds_ope:
             with open(f_udscfg_path, "r", encoding="utf-8") as json_file:
                 try:

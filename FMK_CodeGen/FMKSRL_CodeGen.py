@@ -128,7 +128,7 @@ class FMKSRL_CodeGen():
             # code generation for Serial info
             var_srl_info += f'        [{ENUM_FMKSRL_LINE}_{idx_line}]' + ' = {\n' \
                             + f'            .c_clockPort_e = {ENUM_FMKCPU_RCC_ROOT}_{line_info[0]},\n' \
-                            + f'            .c_HwType_e    = {ENUM_FMKSRL_HW_PROT}_{line_info[0][:(str(line_info[0]).index('T') + 1)]},\n' \
+                            + f'            .c_HwType_e    = {ENUM_FMKSRL_HW_PROT}_{line_info[0][:(str(line_info[0]).index("T") + 1)]},\n' \
                             + f'            .c_IRQNType_e  = {ENUM_FMKCPU_NVIC_ROOT}_{line_info[0]}_IRQN,\n'
             
             if is_istce_used:
