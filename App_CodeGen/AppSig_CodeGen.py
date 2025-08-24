@@ -152,7 +152,10 @@ class AppSig_CodeGen():
         codgen_def_canid += '    ///@brief CAN Message Id\n'
 
         for msg_name, msg_cfg in cls.symbol.items():
-            msgid_hexvalue = hex(int(msg_cfg['msg_id'], 16))
+            try:
+                msgid_hexvalue = hex(int(msg_cfg['msg_id'], 16))
+            except Exception:
+                raise Exception(f'Cannot convert {msg_cfg["msg_id"]} into heximal')
             if str(msg_cfg['cycle_time']) == 'None' or msg_cfg['cycle_time'] is None:
                 msg_cfg['cycle_time'] = 0
                 

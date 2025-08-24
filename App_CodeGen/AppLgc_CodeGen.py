@@ -66,14 +66,7 @@ class AppLgc_CodeGen():
         enum_agent = ""
         var_agent = ""
         enum_srv = ""
-        decl_srv_val_container = ""
-        var_act_srv_asso = ""
-        var_max_act_value = ""
 
-        enm_dependencies = ""
-        var_depencies = ""
-        var_srv_dependencies = ""
-        var_depencies_value = ""
         var_agent = ''
         uds_lgc_data = {}
         uds_lgc_data["LOGIC"] = {}
@@ -124,11 +117,8 @@ class AppLgc_CodeGen():
         enum_srv += "    /**\n" + "    * @brief Enum for Service Function Listy\n" + "    */\n"\
                     + "    typedef enum ____t_eAPPLGC_SrvList\n"\
                     + "    {\n"
-        var_srv_dependencies  += "    /**\n" + "    * @brief Service Actuators Variable Mapping\n" + "    */\n"\
-                                + f'    const t_eAPPACT_ActInterface * c_AppLGc_SrvDepedencies_pae[{APPLGC_ENUM_SRV}_NB] =' + '{\n'
-        
-        var_max_act_value  += "    /**\n" + "    * @brief Service Max Actuators values \n" + "    */\n"\
-                                + f'    const t_uint8 c_AppLGc_SrvActuatorsMax_ua8[{APPLGC_ENUM_SRV}_NB] =' + ' {\n'
+       
+    
         for idx_srv, service_cfg in enumerate(service_cfg_a):
             if str(service_cfg[0]) != 'None':
                 if idx_srv == 0:
@@ -136,32 +126,6 @@ class AppLgc_CodeGen():
                 else:
                     enum_srv += f'        {APPLGC_ENUM_SRV}_{str(service_cfg[0]).upper()},\n'
 
-                enm_dependencies += "    /**\n" + f"    * @brief Enum for Service {service_cfg[0]}\n" + "    */\n"\
-                        + f"    typedef enum ____t_eAPPLGC_Srv{service_cfg[0]}\n"\
-                        + "    {\n"
-                
-                var_depencies += "    /**\n" + f"    * @brief Variable for Actuators/Service Mapping\n" + "    */\n"\
-                        + f'        const t_eAPPACT_ActInterface c_AppLgc_ActService{service_cfg[0]}Mapp_ae[APPLGC_{str(service_cfg[0]).upper()}_ACT_NB]' + '= {\n'
-
-                decl_srv_val_container +=  "/**\n" + f"* @brief Actuators Values Containers for {service_cfg[0]}\n" + "*/\n"\
-                        + f'static t_uAPPACT_SetValue g_ActContainer{service_cfg[0]}_au[APPLGC_{str(service_cfg[0]).upper()}_ACT_NB];\n\n'
-            
-                var_srv_dependencies += f'        (t_eAPPACT_ActInterface *)(&c_AppLgc_ActService{service_cfg[0]}Mapp_ae),\n'
-                for idx_act, actuator in enumerate(service_cfg[1:]):
-                    if str(actuator) != 'None':
-                        if idx_act == 0:
-                            enm_dependencies += f'        APPLGC_ACT_{str(actuator).upper()} = 0x00,\n'
-                        else:
-                            enm_dependencies += f'        APPLGC_ACT_{str(actuator).upper()},\n'
-
-                        var_depencies += f'        {ENUM_APPACT_ACTUATOR_RT}_{str(actuator).upper()},\n'
-
-                var_max_act_value += f'        (t_uint8)APPLGC_{str(service_cfg[0]).upper()}_ACT_NB,\n'
-                var_depencies += '    };\n\n'
-                enm_dependencies += f'        APPLGC_{str(service_cfg[0]).upper()}_ACT_NB,\n'
-                enm_dependencies += '    } ' +f't_eAPPLGC_Srv{service_cfg[0]};\n\n'
-
-                var_act_srv_asso += f'    g_srvFuncInfo_as[{APPLGC_ENUM_SRV}_{str(service_cfg[0]).upper()}].actVal_pau = (t_uAPPACT_SetValue *)(&g_ActContainer{service_cfg[0]}_au);\n'
 
                 if f_is_uds_ope:
                     uds_lgc_data["LOGIC"]["SERVICE"][str(service_cfg[0]).upper()] = {
@@ -169,8 +133,6 @@ class AppLgc_CodeGen():
                             'description' : f'{service_cfg[-1]}'
                     }
 
-        var_max_act_value += '    };\n\n'
-        var_srv_dependencies += '    };\n\n'
         enum_srv += f'\n        {APPLGC_ENUM_SRV}_NB,\n'
         enum_srv += '    } t_eAPPLGC_SrvList;\n'
 
@@ -195,14 +157,10 @@ class AppLgc_CodeGen():
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE,TARGET_T_ENUM_END_LINE)
         cls.code_gen._write_into_file(enum_agent, APPLGC_CONFIGPUBLIC_PATH)
         cls.code_gen._write_into_file(enum_srv, APPLGC_CONFIGPUBLIC_PATH)
-        cls.code_gen._write_into_file(enm_dependencies, APPLGC_CONFIGPUBLIC_PATH)
 
         
         print('[INFO] : APPLGC_Codegen -> Config Private Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE,TARGET_T_VARIABLE_END_LINE)
-        cls.code_gen._write_into_file(var_srv_dependencies, APPLGC_CONFIGPRIVATE_PATH)
-        cls.code_gen._write_into_file(var_depencies, APPLGC_CONFIGPRIVATE_PATH)
-        cls.code_gen._write_into_file(var_max_act_value, APPLGC_CONFIGPRIVATE_PATH)
         cls.code_gen._write_into_file(var_agent, APPLGC_CONFIGPRIVATE_PATH)
         
     
