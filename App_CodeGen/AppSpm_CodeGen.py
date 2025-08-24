@@ -56,7 +56,7 @@ class AppSpm_CodeGen():
     code_gen = LCFE()
 
     @classmethod
-    def code_generation(cls, f_software_cfg, f_udscfg_path, f_is_uds_ope) -> None:
+    def code_generation(cls, f_software_cfg, f_udscfg_path, f_is_uds_ope= False) -> None:
         # Load needed excel arrays
         cls.code_gen.load_excel_file(f_software_cfg)
 

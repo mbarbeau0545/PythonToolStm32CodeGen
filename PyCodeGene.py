@@ -258,9 +258,10 @@ class LoadConfig_FromExcel():
             if f_IsHfile_b:
                 rc_enum += "    "
             rc_enum += f"/**\n    * @brief {f_enum_description}.\n    */\n"
-            if f_IsHfile_b:
-                rc_enum += "    "
-            rc_enum += "typedef enum\n    {\n"
+            
+        if f_IsHfile_b:
+            rc_enum += "    "
+        rc_enum += "typedef enum\n    {\n"
 
         for idx, element in enumerate(f_suffix_enum):
             if f_IsHfile_b:

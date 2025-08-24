@@ -55,7 +55,7 @@ class AppLgc_CodeGen():
     code_gen = LCFE()
 
     @classmethod
-    def code_generation(cls, f_software_cfg, f_udscfg_path, f_is_uds_ope) -> None:
+    def code_generation(cls, f_software_cfg, f_udscfg_path, f_is_uds_ope=False) -> None:
 
         # Load needed
         cls.code_gen.load_excel_file(f_software_cfg)
@@ -125,7 +125,7 @@ class AppLgc_CodeGen():
                     + "    typedef enum ____t_eAPPLGC_SrvList\n"\
                     + "    {\n"
         var_srv_dependencies  += "    /**\n" + "    * @brief Service Actuators Variable Mapping\n" + "    */\n"\
-                                + f'    const t_eAPPACT_Actuators * c_AppLGc_SrvDepedencies_pae[{APPLGC_ENUM_SRV}_NB] =' + '{\n'
+                                + f'    const t_eAPPACT_ActInterface * c_AppLGc_SrvDepedencies_pae[{APPLGC_ENUM_SRV}_NB] =' + '{\n'
         
         var_max_act_value  += "    /**\n" + "    * @brief Service Max Actuators values \n" + "    */\n"\
                                 + f'    const t_uint8 c_AppLGc_SrvActuatorsMax_ua8[{APPLGC_ENUM_SRV}_NB] =' + ' {\n'
@@ -141,12 +141,12 @@ class AppLgc_CodeGen():
                         + "    {\n"
                 
                 var_depencies += "    /**\n" + f"    * @brief Variable for Actuators/Service Mapping\n" + "    */\n"\
-                        + f'        const t_eAPPACT_Actuators c_AppLgc_ActService{service_cfg[0]}Mapp_ae[APPLGC_{str(service_cfg[0]).upper()}_ACT_NB]' + '= {\n'
+                        + f'        const t_eAPPACT_ActInterface c_AppLgc_ActService{service_cfg[0]}Mapp_ae[APPLGC_{str(service_cfg[0]).upper()}_ACT_NB]' + '= {\n'
 
                 decl_srv_val_container +=  "/**\n" + f"* @brief Actuators Values Containers for {service_cfg[0]}\n" + "*/\n"\
                         + f'static t_uAPPACT_SetValue g_ActContainer{service_cfg[0]}_au[APPLGC_{str(service_cfg[0]).upper()}_ACT_NB];\n\n'
             
-                var_srv_dependencies += f'        (t_eAPPACT_Actuators *)(&c_AppLgc_ActService{service_cfg[0]}Mapp_ae),\n'
+                var_srv_dependencies += f'        (t_eAPPACT_ActInterface *)(&c_AppLgc_ActService{service_cfg[0]}Mapp_ae),\n'
                 for idx_act, actuator in enumerate(service_cfg[1:]):
                     if str(actuator) != 'None':
                         if idx_act == 0:

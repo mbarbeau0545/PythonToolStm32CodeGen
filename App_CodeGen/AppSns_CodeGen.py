@@ -62,21 +62,21 @@ class AppSns_CodeGen():
     code_gen = LCFE()
 
     @classmethod
-    def code_generation(cls, f_software_cfg, f_udscfg_path, f_is_uds_ope) -> None:
+    def code_generation(cls, f_software_cfg, f_udscfg_path , f_is_uds_ope = False) -> None:
         
         # Load needed excel arrays
         cls.code_gen.load_excel_file(f_software_cfg)
-        sensors_cfg_a = cls.code_gen.get_array_from_excel("AppSns_Sensors")[1:]
-        drivers_cfg_a = cls.code_gen.get_array_from_excel("AppSns_Drivers")[1:]
+        sns_interface_cfg_a = cls.code_gen.get_array_from_excel("AppSns_SnsInterface")[1:]
+        drivers_cfg_a = cls.code_gen.get_array_from_excel("AppSns_DriverList")[1:]
         unities_cfg_a = cls.code_gen.get_array_from_excel("AppSns_Unities")[1:]
         # make python varaible 
         enum_sns = ""
         enum_drv = ""
         enum_unity = ""
         include_sns = ""
-        var_sns_state = ""
-        var_drv_state = ""
-        var_sns = ""
+        var_sns_if_state = ""
+
+        var_sns_if = ""
         var_drv = ""
         var_unities = ""
         uds_sns_data = {}
@@ -84,23 +84,23 @@ class AppSns_CodeGen():
         #-----------------------------------------------------------------
         #-----------------------------make all enum-----------------------
         #-----------------------------------------------------------------
-        if str(sensors_cfg_a[0][0]) != EMPTY_CELL:
-            enum_sns = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_SENSORS_RT, [str(sns_cfg[0]).upper() for sns_cfg in sensors_cfg_a],
-                                                            "t_eAPPSNS_Sensors", 0, "Enum for Sensors list",
-                                                            [str(sns_cfg[-1])  for sns_cfg in sensors_cfg_a])
+        if str(sns_interface_cfg_a[0][0]) != EMPTY_CELL:
+            enum_sns = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_SNSS_RT, [f"{sns_cfg[0]}_{sns_cfg[1]}" for sns_cfg in sns_interface_cfg_a],
+                                                            "t_eAPPSNS_SnsInterface", 0, "Enum for Sensors list",
+                                                            [f"Sensors Device {sns_cfg[0]}, Interface {sns_cfg[1]}, {sns_cfg[-1]}"  for sns_cfg in sns_interface_cfg_a])
         else:
-            enum_sns = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_SENSORS_RT, [],
-                                                            "t_eAPPSNS_Sensors", 0, "Enum for Sensors list",
+            enum_sns = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_SNSS_RT, [],
+                                                            "t_eAPPSNS_SnsInterface", 0, "Enum for Sensors Interface list",
                                                             [])
 
         
         if str(drivers_cfg_a[0][0]) != EMPTY_CELL:
             enum_drv = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_DRV_RT, [str(drv_cfg[0]).upper() for drv_cfg in drivers_cfg_a],
-                                                        "t_eAPPSNS_Drivers", 0, "Enum for Sensors drivers list",
+                                                        "t_eAPPSNS_SnsDriverList", 0, "Enum for Sensors drivers list",
                                                         [str(drv_cfg[-1])  for drv_cfg in drivers_cfg_a])
         else:
             enum_drv = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_DRV_RT, [],
-                                                        "t_eAPPSNS_Drivers", 0, "Enum for Sensors drivers list",
+                                                        "t_eAPPSNS_SnsDriverList", 0, "Enum for Sensors drivers list",
                                                         [])
         
         enum_unity = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_UNITY_RT, [str(unity[0]).upper() for unity in unities_cfg_a],
@@ -110,42 +110,46 @@ class AppSns_CodeGen():
         #--------------------make var sns/state/ include------------------
         #-----------------------------Make Header/Src fil-----------------
         #-----------------------------------------------------------------
-        var_sns += "    /**< Variable for System Sensors functions*/\n" \
-                    + "    const t_sAPPSNS_SysSnsFunc c_AppSns_SysSns_apf[APPSNS_SENSOR_NB] = {\n"
-        var_sns_state += "/**< Variable for Sensors Drivers State*/\n" \
-                        + "t_eAPPSNS_SensorState g_snsState_ae[APPSNS_SENSOR_NB] = {\n"
-        var_unities += "    /**< Variable for Sensors Unity Management */\n" \
-                    + "    const t_eAPPSNS_SnsMeasType c_AppSns_SnsMeasType_ae[APPSNS_SENSOR_NB] = {\n"
-        for idx, sns_cfg in enumerate(sensors_cfg_a):
+        var_sns_if += "    ///@brief Variable for System Sensors Interface Ope Mngmt Info\n" \
+                    + f"    const t_sAPPSNS_SysSnsCfg c_AppSns_SysSns_as[{ENUM_APPSNS_SNSS_RT}_NB] =" +" {\n"
+        var_sns_dvc = "    ///@brief Variable for system Sensors Device Ope Mngmt\n"\
+                    + "    const t_sAPPSNS_SnsDvcOpeCfg c_AppSns_SnsDvcOpeCfg_as[APPSNS_SNSDVC_NB] = {\n"
+        sns_dvc_list = []
+        for idx, sns_cfg in enumerate(sns_interface_cfg_a):
             
             if str(sns_cfg[0]) != EMPTY_CELL:
                 # make var sensors
-                var_sns += "        {" \
-                            + f"{ENUM_APPSNS_UNITY_RT}_{sns_cfg[1]}," \
-                            + " " * ((SPACE_VARIABLE * 2) - len(f"{ENUM_APPSNS_UNITY_RT}_{str(sns_cfg[1])}")) \
-                            + f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_SetCfg," \
-                            + " " * ((SPACE_VARIABLE * 2) - len(f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_SetCfg,")) \
-                            + f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_GetSigValue," \
-                            + " " * ((SPACE_VARIABLE * 2) - len(f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_GetValue,")) \
-                            + f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_FormatValue" \
-                            + "}, //" + f"{ENUM_APPSNS_SENSORS_RT}_{str(sns_cfg[0]).upper()}\n"
-                # make var state
-                var_sns_state += "    " \
-                                + f"{ENUM_APPSNS_SENSORSST_RT}_{str(sns_cfg[2]).upper()}," \
-                                + f" // {ENUM_APPSNS_SENSORS_RT}_{str(sns_cfg[0]).upper()}\n"
-                # make var unities
-                var_unities += f"        {ENUM_APPSNS_UNITY_RT}_{sns_cfg[1]}," \
-                                + " " * ((SPACE_VARIABLE * 2) - len(f"{ENUM_APPSNS_UNITY_RT}_{sns_cfg[1]},")) \
-                                + f" // {ENUM_APPSNS_SENSORS_RT}_{str(sns_cfg[0]).upper()}\n"
+                var_sns_if += "        {" \
+                            + f"APPSNS_SNSDVC_{sns_cfg[0]},"\
+                            + " " * ((SPACE_VARIABLE * 2) - len(f"APPSNS_SNSDVC_{sns_cfg[0]}")) \
+                            + f"{ENUM_APPSNS_UNITY_RT}_{sns_cfg[2]}," \
+                            + " " * ((SPACE_VARIABLE * 2) - len(f"{ENUM_APPSNS_UNITY_RT}_{str(sns_cfg[2])}")) \
+                            + f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_{sns_cfg[1]}_GetSigValue," \
+                            + " " * ((SPACE_VARIABLE * 2) - len(f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_{sns_cfg[1]}_GetValue,")) \
+                            + f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_{sns_cfg[1]}_FormatValue" \
+                            + "},"\
+                            + " " * ((SPACE_VARIABLE * 2) - len(f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_{sns_cfg[1]}_FormatValue,"))\
+                            + "//" + f"{ENUM_APPSNS_SNSS_RT}_{sns_cfg[0]}_{sns_cfg[1]}\n"
+                              # make var unities
                 # make include 
                 include_sns += f'    #include "{SNS_SPEC_FOLDER_PATH}/{VAR_APPSNS_SPEC}_{sns_cfg[0]}.h"\n'
                 # make header/src file if needed
                 if not os.path.isfile(f"{SNS_SPEC_FOLDER_FULLPATH}/{VAR_APPSNS_SPEC}_{sns_cfg[0]}.h"):
-                    print(f"Couldn't find reference for {sns_cfg[0]}")
-                    cls.make_header_src_file(str(sns_cfg[0]))
+                    if sns_cfg[0] not in sns_dvc_list:
+                        print(f"Couldn't find reference for {sns_cfg[0]}")
+                        cls.make_header_src_file(sns_interface_cfg_a, str(sns_cfg[0]))
                 else:
                     print(f"Header/Source file for {sns_cfg[0]} already existing")
 
+                if sns_cfg[0] not in sns_dvc_list:
+                    sns_dvc_list.append(sns_cfg[0])
+                    var_sns_dvc += '        {'\
+                                + f'APPSYS_OPT_ID_SNS_{sns_cfg[0]},'\
+                                + " " * ((SPACE_VARIABLE * 2) - len(f"APPSYS_OPT_ID_SNS_{sns_cfg[0]}"))\
+                                + f'{VAR_APPSNS_SPEC}_{sns_cfg[0]}_SetCfg'\
+                                + '},'\
+                                + " " * ((SPACE_VARIABLE * 2) - len(f'{VAR_APPSNS_SPEC}_{sns_cfg[0]}_SetCfg'))\
+                                + f' // APPSNS_SNSDVC_{sns_cfg[0]}\n'
                 # uds cfg 
                 if f_is_uds_ope:
                     uds_sns_data["SENSORS"][str(sns_cfg[0]).upper()] = {
@@ -155,10 +159,11 @@ class AppSns_CodeGen():
                             'description' : f'{sns_cfg[3]}'
                     }
 
-
-        var_unities += "    };\n\n"
-        var_sns_state += "};\n\n"
-        var_sns += "    };\n\n"
+        var_sns_dvc += '    };\n\n'
+        var_sns_if_state += "};\n\n"
+        var_sns_if += "    };\n\n"
+        enm_dvc_list = cls.code_gen.make_enum_from_variable("APPSNS_SNSDVC", sns_dvc_list, "t_eAPPSNS_SnsDeviceList", 
+                                                            0, "Enumeration of all sensors device list")
 
         if f_is_uds_ope:
             with open(f_udscfg_path, "r", encoding="utf-8") as json_file:
@@ -174,9 +179,7 @@ class AppSns_CodeGen():
         #------------------------make drivers-----------------------------
         #-----------------------------------------------------------------
         var_drv += "    /**< Variable for System Sensors drivers functions*/\n" \
-                    + "    const t_sAPPSNS_SysDrvFunc c_AppSns_SysDrv_apf[APPSNS_DRIVER_NB] = {\n"
-        var_drv_state += "/**< Variable for Sensors Drivers State*/\n"
-        var_drv_state += "t_eAPPSNS_DrvState g_SnsDrvState_ae[APPSNS_DRIVER_NB] = {\n"
+                    + "    const t_sAPPSNS_SysDrvFunc c_AppSns_SysDrv_as[APPSNS_DRV_NB] = {\n"
         for drv_cfg in drivers_cfg_a:
             if str(drv_cfg[0]) != EMPTY_CELL:
                 var_drv += "        {" 
@@ -188,16 +191,22 @@ class AppSns_CodeGen():
                     var_drv += " " * ((SPACE_VARIABLE * 2) - len(f"(t_cbAppSns_DrvInit *)NULL_FUNCTION,")) \
                 
                 if "Yes" in str(drv_cfg[2]):
-                    var_drv += f"(t_cbAppSns_DrvCyclic *){drv_cfg[0]}_Cyclic" + "},"
+                    var_drv += f"(t_cbAppSns_DrvCyclic *){drv_cfg[0]}_Cyclic,"
                     
                 else: 
-                    var_drv += f"(t_cbAppSns_DrvInit *)NULL_FUNCTION" + "},"
-        
+                    var_drv += f"(t_cbAppSns_DrvInit *)NULL_FUNCTION,"
+
+                if 'Yes' in str(drv_cfg[3]):
+                    var_drv += "TRUE}"
+                    var_drv += " " * SPACE_VARIABLE
+                else:
+                    var_drv += "FALSE}"
+                    var_drv += " " * SPACE_VARIABLE
+
                 var_drv += f"  // {ENUM_APPSNS_DRV_RT}_{str(drv_cfg[0]).upper()}\n"
                 # make DRV state
-                var_drv_state += f"    {ENUM_APPSNS_DRVSTATE_RT}_{str(drv_cfg[3]).upper()}, // {ENUM_APPSNS_DRV_RT}_{str(drv_cfg[0]).upper()}\n"
         
-        var_drv_state += "};\n\n"
+
         var_drv += "    };\n\n"
         #-----------------------------------------------------------------
         #------------------------make code gen----------------------------
@@ -205,22 +214,20 @@ class AppSns_CodeGen():
         print('[INFO] : APPSNS_Codegen -> Config Public Code Generation')
         cls.code_gen.change_target_balise(TARGET_T_ENUM_START_LINE,TARGET_T_ENUM_END_LINE)
         cls.code_gen._write_into_file(enum_unity, APPSNS_CONFIGPUBLIC_PATH)
+        cls.code_gen._write_into_file(enm_dvc_list, APPSNS_CONFIGPUBLIC_PATH)
         cls.code_gen._write_into_file(enum_drv, APPSNS_CONFIGPUBLIC_PATH)
         cls.code_gen._write_into_file(enum_sns, APPSNS_CONFIGPUBLIC_PATH)
         cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE,TARGET_T_VARIABLE_END_LINE)
         
         print('[INFO] : APPSNS_Codegen -> Config Private Code Generation')
-        cls.code_gen._write_into_file(var_unities, APPSNS_CONFIGPRIVATE_PATH)
-        cls.code_gen._write_into_file(var_sns, APPSNS_CONFIGPRIVATE_PATH)
         cls.code_gen._write_into_file(var_drv, APPSNS_CONFIGPRIVATE_PATH)
+        cls.code_gen._write_into_file(var_sns_dvc, APPSNS_CONFIGPRIVATE_PATH)
+        cls.code_gen._write_into_file(var_sns_if, APPSNS_CONFIGPRIVATE_PATH)
         cls.code_gen.change_target_balise(TARGET_T_INCLUDE_START, TARGET_T_INCLUDE_END)
         cls.code_gen._write_into_file(include_sns, APPSNS_CONFIGPRIVATE_PATH)
-
-        
     
-
     @classmethod
-    def make_header_src_file(cls, f_sns_name:str):
+    def make_header_src_file(cls,f_snslist_cfg, f_sns_name:str):
         """
             @brief Make .h and .c SNSSPEC file with funcction declaration 
         """
@@ -232,10 +239,13 @@ class AppSns_CodeGen():
         include_h = '    #include "TypeCommon.h"\n' \
                    + '    #include "APP_CFG/ConfigFiles/APPSNS_ConfigPublic.h"\n' 
         include_c = f'#include "./{VAR_APPSNS_SPEC}_{f_sns_name}.h"\n'
-        suffix_func = {"SetCfg" : ["(void)", "t_cbAppSns_SetSnsCfg"], 
-                       "GetSigValue" :  ["(t_float32 *f_rawSigValue_pf32, t_bool * f_isValue_OK)", "t_cbAppSns_GetSigValue" ],
-                       "FormatValue" : ["(t_float32  f_rawValue_f32, t_float32 * f_SnsValue_f32)", "t_cbAppSns_FormatValSI" ]}
-        
+        suffix_func = {}
+        suffix_func[f"SetCfg"] = ["(t_uint8 f_snsDvcOpt_u8, t_eAPPSNS_SnsDriverList *f_drvUsed_pe)", "t_cbAppSns_SetSnsCfg"]
+        for sns_cfg in f_snslist_cfg:
+            if sns_cfg[0] == f_sns_name:
+                suffix_func[f"{sns_cfg[1]}_GetSigValue"] = ["(t_float32 *f_rawSigValue_pf32, t_bool * f_isValue_OK)", "t_cbAppSns_GetSigValue" ]
+                suffix_func[f"{sns_cfg[1]}_FormatValue"] = ["(t_float32  rawValue_f32, t_float32 *SnsValue_f32)", "t_cbAppSns_FormatValSI" ]
+
         if not os.path.isdir(SNS_SPEC_FOLDER_FULLPATH):
             os.makedirs(SNS_SPEC_FOLDER_FULLPATH)
 

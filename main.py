@@ -38,6 +38,7 @@ from App_CodeGen.AppSdm_CodeGen     import AppSdm_CodeGen as APPSDM
 from App_CodeGen.AppSpm_CodeGen     import AppSpm_CodeGen as APPSPM
 from App_CodeGen.AppLgc_CodeGen     import AppLgc_CodeGen as APPLGC
 from App_CodeGen.AppSig_CodeGen     import AppSig_CodeGen as APPSIG
+from App_CodeGen.AppSys_Codegen     import AppSys_CodeGen as APPSYS
 #------------------------------------------------------------------------------
 #                                       CONSTANT
 #------------------------------------------------------------------------------
@@ -86,26 +87,15 @@ def main()-> None:
     gnrl_info = code_gen.get_array_from_excel('GeneralInfoSoftware')[1:][0]
     soft_version = str(f'V{gnrl_info[0]}Pr{gnrl_info[1]}')
     soft_udscfg_path = f"Doc\\ConfigPrj\\UdsCfg\\UdsInfo_{soft_version}.json"
+
     #--- check if the version already exist, if it exists, we erase it, if it doesn't we create it ----#
-    filled_uds_file = True
-
-    if os.path.isfile(soft_udscfg_path):
-        response = input(f"[WARNING] : File 'UdsInfo_{soft_version}.json' already exists. Do you want to erase it ? (Y/N): ").strip().lower()
-        if response.lower() == 'n':
-            filled_uds_file = False
-            print('[INFO] : The file will no be modified')
-
-    if filled_uds_file:
-        with open(soft_udscfg_path, 'w') as file:
-                    json.dump({}, file, indent=4)
-                    print(f"[INFO] : Uds Config for {soft_version} has been created.")
-    
-    APPSNS.code_generation(software_cfg_path, soft_udscfg_path, filled_uds_file)
-    APPACT.code_generation(software_cfg_path, soft_udscfg_path, filled_uds_file)
-    APPSDM.code_generation(software_cfg_path, soft_udscfg_path, filled_uds_file)
-    APPSPM.code_generation(software_cfg_path, soft_udscfg_path, filled_uds_file)
+    APPSYS.code_generation(software_cfg_path, soft_udscfg_path)
+    APPSNS.code_generation(software_cfg_path, soft_udscfg_path)
+    APPACT.code_generation(software_cfg_path, soft_udscfg_path)
+    APPSDM.code_generation(software_cfg_path, soft_udscfg_path)
+    APPSPM.code_generation(software_cfg_path, soft_udscfg_path)
     APPSIG.code_generation(SYM_MSG_CFG)
-    APPLGC.code_generation(software_cfg_path, soft_udscfg_path, filled_uds_file)
+    APPLGC.code_generation(software_cfg_path, soft_udscfg_path)
 
     print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     print("<<<<<<<<<<<<<<<<<Successfuly made code generation for project>>>>>>>>>>>>>>>>>")
