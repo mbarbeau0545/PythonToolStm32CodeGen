@@ -80,22 +80,21 @@ class AppSpm_CodeGen():
                     + f"    const t_sAPPSPM_ItemPrmCfg c_AppSpm_ItemPrmInfo_as[{APPSPM_ENUM_ROOT_PARAM}_NB] =" + "{\n"
         var_prm += '    //version_u8                   minItemVal_u16                maxItemVal_u16                 DefaultItemVal_u16\n'
         for item_cfg in item_prm_a:
-            if item_cfg[6] is None:
+            if item_cfg[9] is None:
                 signal_related = "APPSIG_SIGNAL_NB"
             else: 
-                signal_related = f"APPSIG_SIGNAL_{item_cfg[6]}"
-            var_prm += '        {'\
-                    + f'(t_uint8){item_cfg[2]},'\
-                    + " " * ((SPACE_VARIABLE) - len(f"(t_uint8){item_cfg[2]}"))\
-                    + f'(t_uint16){item_cfg[3]},'\
-                    + " " * ((SPACE_VARIABLE) - len(f"(t_uint16){item_cfg[3]}"))\
-                    + f'(t_uint16){item_cfg[4]},'\
-                    + " " * ((SPACE_VARIABLE) - len(f"(t_uint16){item_cfg[4]}"))\
-                    + f'(t_uint16){item_cfg[5]},'\
-                    + " " * ((SPACE_VARIABLE) - len(f"(t_uint16){item_cfg[5]}"))\
-                    + f'{signal_related}' + '},'\
-                    + " " * ((50) - len(f"{signal_related}"))\
-                    + f' // {APPSPM_ENUM_ROOT_PARAM}_{item_cfg[1]}\n'
+                signal_related = f"APPSIG_SIGNAL_{item_cfg[9]}"
+
+            var_prm += f'    [{APPSPM_ENUM_ROOT_PARAM}_{item_cfg[1]}] = ' + '{\n'\
+                    + f'        .version_u8 = (t_uint8){item_cfg[2]},\n'\
+                    + f'        .minItemVal_f32 = (t_float32){item_cfg[3]},\n'\
+                    + f'        .maxItemVal_f32 = (t_float32){item_cfg[4]},\n'\
+                    + f'        .DefaultItemVal_f32 = (t_float32){item_cfg[5]},\n'\
+                    + f'        .factor_f32 = (t_float32){item_cfg[7]},\n'\
+                    + f'        .offset_s16 = (t_sint16){item_cfg[8]},\n'\
+                    + f'        .prmType_e = APPSPM_PRM_TYPE_{str(item_cfg[6]).upper()},\n'\
+                    + f'        .signal_e = {signal_related}\n'\
+                    +  '    },\n'
             
             if f_is_uds_ope:
                 uds_item_prm["PARAMETERS"][str(item_cfg[1]).upper()] = {

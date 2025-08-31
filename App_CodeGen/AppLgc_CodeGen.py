@@ -95,7 +95,7 @@ class AppLgc_CodeGen():
                 var_agent += '        {'\
                             + f'{agent_info[0]}_Init,'\
                             + " " * ((SPACE_VARIABLE) - len(f"{agent_info[0]},"))\
-                            + f'{agent_info[0]}_Cyclic'\
+                            + f'{agent_info[0]}_PeriodicTask'\
                             + '},' + f'// {APPLGC_ENUM_AGENT}_{str(agent_info[0]).upper()}\n'
 
                 if f_is_uds_ope:
