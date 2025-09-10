@@ -36,12 +36,12 @@ import re
 
 PATTERN_ENUM = r'(\d+)="([^"]+)"'
 PATTERN_SIGNAL = re.compile(
-    r"Sig=(\w+)\s+unsigned\s+(\d+)"                  # nom et longueur
-    r"(?:\s+(-m))?"                                  # encodage
-    r"(?:\s+/f:(\d+))?"                              # factor
-    r"(?:\s+/o:(\d+))?"                              # offset
-    r"(?:\s+/max:(\d+))?"                            # max (non utilisé ici mais capturé)
-    r"(?:\s+/e:(\w+))?"                              # enum
+    r"Sig=(\w+)\s+unsigned\s+(\d+)"                     # nom et longueur
+    r"(?:\s+(-m))?"                                     # encodage
+    r"(?:\s+/f:([+-]?(?:\d+(?:\.\d*)?|\.\d+)))?"        # factor (int ou float)
+    r"(?:\s+/o:([+-]?(?:\d+(?:\.\d*)?|\.\d+)))?"        # offset (idem)
+    r"(?:\s+/max:(\d+))?"                               # max
+    r"(?:\s+/e:(\w+))?"                                 # enum
 )
 
 # Expressions régulières nécessaires
@@ -135,7 +135,7 @@ class AppSig_CodeGen():
                             + ' ' * ((SIG_SPACE_VARIABLE) - len(f'{signal_cfg["length"]},'))\
                             + f'APPSIG_SIG_ENCODE_{str(signal_cfg["encoding"]).upper()},'\
                             + ' ' * ((SIG_SPACE_VARIABLE) - len(f'{signal_cfg["encoding"]},'))\
-                            + f'(t_float32){signal_cfg["factor"]}.0f,'\
+                            + f'(t_float32){signal_cfg["factor"]},'\
                             + ' ' * ((SIG_SPACE_VARIABLE) - len(f"{signal_cfg['factor']},"))\
                             + f'(t_sint16){signal_cfg["offset"]}'\
                             + ' ' * ((SIG_SPACE_VARIABLE) - len(f"{signal_cfg['offset']}"))\
@@ -311,13 +311,13 @@ class AppSig_CodeGen():
                             nom_signal    = match.group(1)
                             longueur      = int(match.group(2))
                             encoding_flag = match.group(3)
-                            factor        = int(match.group(4)) if match.group(4) else 1
+                            factor        = float(match.group(4)) if match.group(4) else 1
                             offset        = int(match.group(5)) if match.group(5) else 0
                             # match.group(6) = max (non utilisé ici)
                             enum_name     = match.group(7) if match.group(7) else None
 
                             encoding = "MOTOROLA" if encoding_flag else "INTEL"
-
+                            
                             cls.signal[nom_signal] = {
                                 'length': longueur,
                                 'encoding': encoding,

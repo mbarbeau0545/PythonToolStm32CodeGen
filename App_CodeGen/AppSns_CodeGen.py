@@ -116,7 +116,8 @@ class AppSns_CodeGen():
                     + "    const t_sAPPSNS_SnsDvcOpeCfg c_AppSns_SnsDvcOpeCfg_as[APPSNS_SNSDVC_NB] = {\n"
         sns_dvc_list = []
         for idx, sns_cfg in enumerate(sns_interface_cfg_a):
-            
+            if sns_cfg[3] == None or sns_cfg[3] == 'None':
+                sns_cfg[3] = 'NB'
             if str(sns_cfg[0]) != EMPTY_CELL:
                 # make var sensors
                 var_sns_if += "        {" \
@@ -126,9 +127,10 @@ class AppSns_CodeGen():
                             + " " * ((SPACE_VARIABLE * 2) - len(f"{ENUM_APPSNS_UNITY_RT}_{str(sns_cfg[2])}")) \
                             + f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_{sns_cfg[1]}_GetSigValue," \
                             + " " * ((SPACE_VARIABLE * 2) - len(f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_{sns_cfg[1]}_GetValue,")) \
-                            + f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_{sns_cfg[1]}_FormatValue" \
-                            + "},"\
+                            + f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_{sns_cfg[1]}_FormatValue," \
                             + " " * ((SPACE_VARIABLE * 2) - len(f"{VAR_APPSNS_SPEC}_{sns_cfg[0]}_{sns_cfg[1]}_FormatValue,"))\
+                            + f"APPSIG_SIGNAL_{sns_cfg[3]}"\
+                            + "},"\
                             + "//" + f"{ENUM_APPSNS_SNSS_RT}_{sns_cfg[0]}_{sns_cfg[1]}\n"
                               # make var unities
                 # make include 
