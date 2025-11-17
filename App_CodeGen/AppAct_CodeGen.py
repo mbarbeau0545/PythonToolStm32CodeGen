@@ -101,8 +101,13 @@ class AppAct_CodeGen():
                     + "    const t_sAPPACT_ActDvcOpeCfg c_AppAct_ActDvcOpeCfg_as[APPACT_ACTDVC_NB] = {\n"
         act_dvc_list = []
         for idx, act_cfg in enumerate(act_interface_cfg_a):
+            # replace deebug signal with default if not use by user
             if act_cfg[2] == None or act_cfg[2] == 'None':
                 act_cfg[2] = 'NB'
+            if act_cfg[3] == None or act_cfg[3] == 'None':
+                act_cfg[3] = 'NB'
+            if act_cfg[4] == None or act_cfg[4] == 'None':
+                act_cfg[4] = 'NB'
             if str(act_cfg[0]) != EMPTY_CELL:
                 # make var sensors
                 var_act_if += "        {" \
@@ -110,9 +115,13 @@ class AppAct_CodeGen():
                             + " " * ((SPACE_VARIABLE * 2) - len(f"APPACT_ACTDVC_{act_cfg[0]}")) \
                             + f"{VAR_APPACT_SPEC}_{act_cfg[0]}_{act_cfg[1]}_SetValue," \
                             + " " * ((SPACE_VARIABLE * 2) - len(f"{VAR_APPACT_SPEC}_{act_cfg[0]}_{act_cfg[1]}_SetValue,")) \
-                            + f"{VAR_APPACT_SPEC}_{act_cfg[0]}_{act_cfg[1]}_GetValue," \
+                            + f"{VAR_APPACT_SPEC}_{act_cfg[0]}_{act_cfg[1]}_GetValue,"\
                             + " " * ((SPACE_VARIABLE * 2) - len(f"{VAR_APPACT_SPEC}_{act_cfg[0]}_{act_cfg[1]}_GetValue,"))\
-                            + f"APPSIG_SIGNAL_{act_cfg[2]}"\
+                            + f"APPSIG_SIGNAL_{act_cfg[2]},"\
+                            + " " * ((SPACE_VARIABLE * 2) - len(f"APPSIG_SIGNAL_{act_cfg[2]}"))\
+                            + f"APPSIG_SIGNAL_{act_cfg[3]},"\
+                            + " " * ((SPACE_VARIABLE * 2) - len(f"APPSIG_SIGNAL_{act_cfg[3]}"))\
+                            + f"APPSIG_SIGNAL_{act_cfg[4]}"\
                             + "},"\
                             + "//" + f"{ENUM_APPACT_ACTUATOR_RT}_{act_cfg[0]}_{act_cfg[1]}\n"
                               # make var unities
