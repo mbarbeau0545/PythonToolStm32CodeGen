@@ -159,7 +159,7 @@ class FMKIO_CodeGen():
             stm_pin_used_available = stm_pin_used_available_h7
         else:
             adc_vref = "ADC_1"
-            stm_pin_used = ['PA14', 'PA13', 'PA15', 'PC0', 'PC1']
+            stm_pin_used = ['PA14', 'PA13']
             stm_pin_used_available = stm_pin_used_available_g4
         stm_pwm_chl_use = []
         stm_freq_chnl_use = []
@@ -446,7 +446,6 @@ class FMKIO_CodeGen():
         for idx, ecdr_cfg in enumerate(encdr_cfg_astr):
             # first check that channel 1 and 1 are beeing used 
             parts = str(ecdr_cfg[5]).replace(" ", "").split(',')
-            print(parts)
             if len(parts) == 1 and parts[0] == 'None':
                 # no ecdr config
                 print('[INFO] : Detect 0 encoder configuration...')
@@ -462,9 +461,10 @@ class FMKIO_CodeGen():
                 TI2_pin = str(f"P{ecdr_cfg[2][5:]}{ecdr_cfg[3][4:]}")
                 TI1_gpio = ecdr_cfg[0][5:]
                 TI2_gpio = ecdr_cfg[2][5:]
-                if (TI1_pin in stm_pin_used 
-                or TI2_pin in stm_pin_used):
-                    raise GPIO_AlreadyConfgigured(f"{RxPin} or {TxPin} has already been configured")
+                if TI1_pin in stm_pin_used:
+                    raise GPIO_AlreadyConfgigured(f"{TI1_pin} has already been configured")
+                if TI2_pin in stm_pin_used:
+                    raise GPIO_AlreadyConfgigured(f"{TI2_pin} has already been configured")
                 
                 ecdr_sig.append([TI1_pin, TI2_pin])
                 stm_pin_used.append(TI1_pin)
@@ -520,9 +520,10 @@ class FMKIO_CodeGen():
                 TxGPIO = serial_cfg[6][5:]
                 alternate_func = serial_cfg[8]
 
-                if (RxPin in stm_pin_used
-                or TxPin in stm_pin_used):
-                    raise GPIO_AlreadyConfgigured(f"{RxPin} or {TxPin} has already been configured")
+                if RxPin in stm_pin_used:
+                    raise GPIO_AlreadyConfgigured(f"{RxPin} has already been configured")
+                if TxPin in stm_pin_used:
+                    raise GPIO_AlreadyConfgigured(f"{TxPin} has already been configured")
 
                 serial_sig.append([RxPin, TxPin])
                 stm_pin_used.append(TxPin)
@@ -552,9 +553,10 @@ class FMKIO_CodeGen():
         for idx, can_cfg in enumerate(SigCan_astr[1:]):
             RxPin = str(f"P{can_cfg[0][5:]}{can_cfg[1][4:]}")
             TxPin = str(f"P{can_cfg[2][5:]}{can_cfg[3][4:]}")
-            if (RxPin in stm_pin_used 
-            or TxPin in stm_pin_used):
-                raise GPIO_AlreadyConfgigured(f"{RxPin} or {TxPin} has already been configured")
+            if RxPin in stm_pin_used:
+                raise GPIO_AlreadyConfgigured(f"{RxPin} has already been configured")
+            if TxPin in stm_pin_used:
+                raise GPIO_AlreadyConfgigured(f"{TxPin} has already been configured")
             
             can_sig.append([RxPin, TxPin])
             stm_pin_used.append(TxPin)

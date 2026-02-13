@@ -94,7 +94,7 @@ def main()-> None:
     APPACT.code_generation(software_cfg_path, soft_udscfg_path)
     APPSDM.code_generation(software_cfg_path, soft_udscfg_path)
     APPSPM.code_generation(software_cfg_path, soft_udscfg_path)
-    APPSIG.code_generation(SYM_MSG_CFG)
+    APPSIG.code_generation(software_cfg_path, SYM_MSG_CFG)
     APPLGC.code_generation(software_cfg_path, soft_udscfg_path)
 
     print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")

@@ -74,7 +74,7 @@ ENUM_FMKCPU_DMA_TRANSPRIO          = 'FMKCPU_DMA_TRANSPRIO'
 CPU_FAMILY_MANAGE = ['G4', 'H7']
 PERIPH_CLOCK_NEED_PRESCALER = ['ADC', 'I2C', 'I2S', 'LPTIM', 'TIM', 'LPUART', 'QUADSPI', 'RNG', 'USB', 'SAI1', 'FDCAN', 'CAN', 'UART', 'USART', 'HRTIM']
 
-PERIPH_TO_CLKSRC:Dict[str,str] = {
+PERIPH_TO_CLKSRC:Dict[str,str | None] = {
     'HSE'      :  'LSE',
     'HSI'      :  'HSI',
     'SYSTEM'   :  'SYSCLK',
@@ -279,7 +279,7 @@ class FMKCPU_CodeGen():
                                     + f'                periphClkCfg_s.{clk_selec_prefix}ClockSelection = ' \
                                     + f'RCC_{clk_selec_prefix.upper()}CLKSOURCE_{preiph_clk_src.upper()};\n' \
                                     + f'                //------ Reference Clock  Source {rcc_cfg[1]} ------//\n' \
-                                    + f'                periphClkCfg_s.PeriphClockSelection = RCC_PERIPHCLK_{clk_selec_prefix.upper()};\n' \
+                                    + f'                periphClkCfg_s.PeriphClockSelection |= RCC_PERIPHCLK_{clk_selec_prefix.upper()};\n' \
                                     +  '                break;\n'
             else:
                 PeriphClockCfgError(f'{rcc_cfg[2]} is not allowed, only Yes or No value allowed')

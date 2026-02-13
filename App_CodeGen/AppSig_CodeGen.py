@@ -45,7 +45,9 @@ PATTERN_SIGNAL = re.compile(
 )
 
 # Expressions régulières nécessaires
-PATTERN_SYM_ID = re.compile(r'ID=([0-9A-Fa-f]+)h\s*//\s*(\w+)')
+PATTERN_SYM_ID = re.compile(
+    r'ID=([0-9A-Fa-f]+)h\s*//\s*(\w+)\s*(.*)'
+)
 PATTERN_SYM_LEN = re.compile(r'Len=(\d+)')
 PATTERN_SYM_SIG = re.compile(r'Sig=(\w+)\s+(\d+)')
 
@@ -53,6 +55,7 @@ MSG_TYPE_MAPPING = {
     'RECEIVE' : 'APPSIG_MSG_DIR_RX',
     'SEND' : 'APPSIG_MSG_DIR_TX',
     'SENDRECEIVE' : 'APPSIG_MSG_DIR_RX_TX',
+    'UNUSED' : 'APPSIG_MSG_DIR_UNUSED'
 }
 
 SIG_SPACE_VARIABLE = 55
@@ -86,7 +89,7 @@ class AppSig_CodeGen():
     file_cfg_path:str = ''
 
     @classmethod
-    def code_generation(cls, f_msg_cfg_file:str) -> None:
+    def code_generation(cls, f_software_cfg:str, f_msg_cfg_file:str) -> None:
 
         cls.file_cfg_path = f_msg_cfg_file
         cls.get_info_from_file()
@@ -103,6 +106,11 @@ class AppSig_CodeGen():
         codgen_canmsg_cfg = ''
         codgen_def_srlid = ''
         codgen_def_canid = ''
+
+        cls.code_gen.load_excel_file(f_software_cfg)
+        nb_ecu = int(len(cls.code_gen.get_array_from_excel("EcuNbDesc")[1:]))
+        
+
         signals_list = list(cls.signal.keys())
         codegen_enum_sig += cls.code_gen.make_enum_from_variable('APPSIG_SIGNAL',
                                                                 signals_list,
@@ -178,12 +186,30 @@ class AppSig_CodeGen():
                                 + ' '* ((SIG_SPACE_VARIABLE) - len(f"APPSIG_SRL_ID_{str(msg_name).upper()}"))\
                                 + f'((t_uint32){msgid_hexvalue})\n'
                 
+                # multi ecu managment
+                
+                if nb_ecu != 1\
+                and len(msg_cfg['msg_direction']) != nb_ecu:
+                        raise ValueError(f'Expected {nb_ecu} direction, get {len(msg_cfg["msg_direction"])}\n {print(msg_cfg["msg_direction"])}')
+                
+                # build the direction variable 
+                direction_str = "{"
+                if nb_ecu == 1:
+                    direction_str += MSG_TYPE_MAPPING[msg_cfg['msg_direction']]
+                else:
+                    for idx, dir in enumerate(msg_cfg["msg_direction"]):
+                        direction_str += MSG_TYPE_MAPPING[dir]
+                        if idx < (len(msg_cfg["msg_direction"]) - 1):
+                            direction_str += ',' + ' ' * (30 - len(MSG_TYPE_MAPPING[dir]))
+
+                direction_str += '}'
+                        
+
                 # make serial msg cfg
                 codgen_srlmsg_cfg += '        {'\
                                     + f'APPSIG_SRL_ID_{str(msg_name).upper()},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"APPSIG_SRL_ID_{str(msg_name).upper()}"))\
-                                    + f'{MSG_TYPE_MAPPING[msg_cfg["msg_direction"]]},'\
-                                    + ' ' * ((SIG_SPACE_VARIABLE) - len(f"{MSG_TYPE_MAPPING[msg_cfg['msg_direction']]}"))\
+                                    + f'{direction_str},          '\
                                     + f'(t_uint16){msg_cfg["cycle_time"]},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"(t_uint16){msg_cfg['cycle_time']}"))\
                                     + f'(t_uint16){msg_cfg["timeout"]},'\
@@ -212,12 +238,27 @@ class AppSig_CodeGen():
                 codgen_def_canid += f'    #define APPSIG_CAN_ID_{str(msg_name).upper()}'\
                                 + ' '* ((SIG_SPACE_VARIABLE) - len(f"APPSIG_CAN_ID_{msg_name}"))\
                                 + f'((t_uint32){msgid_hexvalue})\n'
-            
+
+                # multi ecu managment
+                if len(msg_cfg['msg_direction']) != nb_ecu:
+                        raise ValueError(f'Expected {nb_ecu} direction, get {len(msg_cfg["msg_direction"])}\n {print(msg_cfg["msg_direction"])}')
+                
+                # build the direction variable 
+                direction_str = "{"
+                if nb_ecu == 1:
+                    direction_str += MSG_TYPE_MAPPING[msg_cfg['msg_direction']]
+                else:
+                    for idx, dir in enumerate(msg_cfg["msg_direction"]):
+                        direction_str += MSG_TYPE_MAPPING[dir]
+                        if idx < (len(msg_cfg["msg_direction"]) - 1):
+                            direction_str += ',' + ' ' * (30 - len(MSG_TYPE_MAPPING[dir]))
+
+                direction_str += '}'
+
                 codgen_canmsg_cfg += '    {'\
                                     + f'APPSIG_CAN_ID_{str(msg_name).upper()},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"APPSIG_CAN_ID_{msg_name}"))\
-                                    + f'{MSG_TYPE_MAPPING[msg_cfg["msg_direction"]]},'\
-                                    + ' ' * ((SIG_SPACE_VARIABLE) - len(f"{MSG_TYPE_MAPPING[msg_cfg['msg_direction']]}"))\
+                                    + f'{direction_str},          '\
                                     + f'(t_uint16){msg_cfg["cycle_time"]},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"(t_uint16){msg_cfg['cycle_time']}"))\
                                     + f'(t_uint16){msg_cfg["timeout"]},'\
@@ -334,6 +375,7 @@ class AppSig_CodeGen():
                                 and current_read != 'SEND' and previous_read != 'SEND':
                                 raise ValueError(f"Missing Timeout for symbol {current_symbol}")
 
+
                             current_symbol = line.strip().strip('[]')
                             cls.symbol[current_symbol] = {
                                 'msg_id': None,
@@ -363,6 +405,21 @@ class AppSig_CodeGen():
                             if current_symbol:
                                 cls.symbol[current_symbol]['msg_id'] = current_id
                                 cls.symbol[current_symbol]['msg_type'] = current_type
+
+                                # multi ecu managment 
+                                print(match_id.group(3))
+                                if match_id.group(3) != "":
+                                    multi_msg_dir = []
+                                    for dir_cfg in str(match_id.group(3)).replace(" ", "").split(","):
+                                        dir_value = str(dir_cfg.split(":")[1])
+                                        if dir_value not in ["RECEIVE", "SEND", "SENDRECEIVE", "UNUSED"]:
+                                            raise Exception(f'{dir} is unknwon expect ["RECEIVE", "SEND", "SENDRECEIVE"]')
+
+                                        multi_msg_dir.append(dir_value)
+
+                                    # on réecrit la valeur de la direction
+                                    cls.symbol[current_symbol]['msg_direction'] = multi_msg_dir
+
                             continue
 
                         match_len = PATTERN_SYM_LEN.match(line)
