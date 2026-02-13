@@ -118,6 +118,9 @@ class AppSns_CodeGen():
         for idx, sns_cfg in enumerate(sns_interface_cfg_a):
             if sns_cfg[3] == None or sns_cfg[3] == 'None':
                 sns_cfg[3] = 'NB'
+
+            if len(sns_cfg[3]) > 32:
+                raise ValueError(f'{sns_cfg[3]} is to long to be open in PCAN Symbol, get {len(sns_cfg[3])} expect less than 32')
             if str(sns_cfg[0]) != EMPTY_CELL:
                 # make var sensors
                 var_sns_if += "        {" \

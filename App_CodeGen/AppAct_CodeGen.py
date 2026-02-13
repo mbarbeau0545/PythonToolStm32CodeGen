@@ -108,6 +108,14 @@ class AppAct_CodeGen():
                 act_cfg[3] = 'NB'
             if act_cfg[4] == None or act_cfg[4] == 'None':
                 act_cfg[4] = 'NB'
+
+            if len(act_cfg[2]) > 32:
+                raise ValueError(f'{act_cfg[2]} is to long to be open in PCAN Symbol get {len(act_cfg[2])} expect less than 32')
+            if len(act_cfg[3]) > 32:
+                raise ValueError(f'{act_cfg[3]} is to long to be open in PCAN Symbol get {len(act_cfg[3])} expect less than 32')
+            if len(act_cfg[4]) > 32:
+                raise ValueError(f'{act_cfg[4]} is to long to be open in PCAN Symbol,  get {len(act_cfg[4])} expect less than 32')
+            
             if str(act_cfg[0]) != EMPTY_CELL:
                 # make var sensors
                 var_act_if += "        {" \

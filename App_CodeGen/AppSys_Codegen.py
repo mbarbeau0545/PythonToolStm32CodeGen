@@ -104,13 +104,15 @@ class AppSys_CodeGen():
                     + "    const t_uint8 c_AppSys_MachOptCfg_ua8[APPSYS_MACHINE_NB][APPSYS_OPT_ID_NB] = {\n"
         for machine_info in cfg_machine_a[1:]:
             machine_list.append(str(machine_info[0]).upper())
+            var_mach_info += f"        [APPSYS_MACHINE_{machine_info[0]}]" + " = {\n"
 
-            var_mach_info += '        {'
             for idx, opt_value in enumerate(machine_info[1:]):
-                var_mach_info += f"APPSYS_OPT_{str(cfg_machine_a[0][idx+1]).upper()}_{opt_value.upper()},"\
-                            + ' ' * (50 - len(f"APPSYS_OPT_{str(cfg_machine_a[0][idx+1]).upper()}_{opt_value.upper()}"))
+                var_mach_info += f"            APPSYS_OPT_{str(cfg_machine_a[0][idx+1]).upper()}_{opt_value.upper()},"\
+                            + ' ' * (50 - len(f"APPSYS_OPT_{str(cfg_machine_a[0][idx+1]).upper()}_{opt_value.upper()}"))\
+                            + "// " + f"APPSYS_OPT_ID_{optiont_list_id[idx]}\n"
+            
 
-            var_mach_info += '},' + f'  // APPSYS_MACHINE_{str(machine_info[0]).upper()}\n'
+            var_mach_info += "        },\n"
         var_prm_opt += '    };\n\n'
         var_mach_info += '    };\n\n'
         enm_mach_list = cls.code_gen.make_enum_from_variable("APPSYS_MACHINE", machine_list, "t_eAPPSYS_MachineList", 0)

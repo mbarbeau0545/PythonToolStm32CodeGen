@@ -36,12 +36,12 @@ import re
 
 PATTERN_ENUM = r'(\d+)="([^"]+)"'
 PATTERN_SIGNAL = re.compile(
-    r"Sig=(\w+)\s+unsigned\s+(\d+)"                     # nom et longueur
-    r"(?:\s+(-m))?"                                     # encodage
-    r"(?:\s+/f:([+-]?(?:\d+(?:\.\d*)?|\.\d+)))?"        # factor (int ou float)
-    r"(?:\s+/o:([+-]?(?:\d+(?:\.\d*)?|\.\d+)))?"        # offset (idem)
-    r"(?:\s+/max:(\d+))?"                               # max
-    r"(?:\s+/e:(\w+))?"                                 # enum
+    r"Sig=(\w+)\s+(\w+)\s+(\d+)"                         # nom, type, longueur
+    r"(?:\s+(-m))?"                                      # encodage
+    r"(?:\s+/f:([+-]?(?:\d+(?:\.\d*)?|\.\d+)))?"         # factor
+    r"(?:\s+/o:([+-]?(?:\d+(?:\.\d*)?|\.\d+)))?"         # offset
+    r"(?:\s+/max:(\d+))?"                                # max
+    r"(?:\s+/e:(\w+))?"                                  # enum
 )
 
 # Expressions régulières nécessaires
@@ -350,12 +350,12 @@ class AppSig_CodeGen():
                         match = PATTERN_SIGNAL.match(line)
                         if match:
                             nom_signal    = match.group(1)
-                            longueur      = int(match.group(2))
-                            encoding_flag = match.group(3)
-                            factor        = float(match.group(4)) if match.group(4) else 1
-                            offset        = int(match.group(5)) if match.group(5) else 0
+                            longueur      = int(match.group(3))
+                            encoding_flag = match.group(4)
+                            factor        = float(match.group(5)) if match.group(5) else 1
+                            offset        = int(match.group(6)) if match.group(6) else 0
                             # match.group(6) = max (non utilisé ici)
-                            enum_name     = match.group(7) if match.group(7) else None
+                            enum_name     = match.group(8) if match.group(8) else None
 
                             encoding = "MOTOROLA" if encoding_flag else "INTEL"
                             
@@ -407,7 +407,6 @@ class AppSig_CodeGen():
                                 cls.symbol[current_symbol]['msg_type'] = current_type
 
                                 # multi ecu managment 
-                                print(match_id.group(3))
                                 if match_id.group(3) != "":
                                     multi_msg_dir = []
                                     for dir_cfg in str(match_id.group(3)).replace(" ", "").split(","):
