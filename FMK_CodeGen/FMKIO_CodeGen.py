@@ -300,32 +300,33 @@ class FMKIO_CodeGen():
             var_InFreq += f"{elem_desc}" + " " * (SPACE_VARIABLE - len(elem_desc))
         var_InFreq += "\n"
 
-        for idx, pin_freq_cfg in enumerate(InFreq_astr[1:]):
-            sig_name = f'P{pin_freq_cfg[0][5:]}{pin_freq_cfg[1][4:]}'
-            if sig_name in stm_pin_used:
-                raise GPIO_AlreadyConfgigured(f"{pin_freq_cfg[5]} has already been configured")
-            
-            if str(pin_freq_cfg[3] + pin_freq_cfg[4]) in stm_tim_chnl:
-                raise TimerCfg_alreadyUsed(f" the timer {pin_freq_cfg[3]} and his channel {pin_freq_cfg[4]} has already been configured")
+        if str(InFreq_astr[1][0]) != "None":
+            for idx, pin_freq_cfg in enumerate(InFreq_astr[1:]):
+                sig_name = f'P{pin_freq_cfg[0][5:]}{pin_freq_cfg[1][4:]}'
+                if sig_name in stm_pin_used:
+                    raise GPIO_AlreadyConfgigured(f"{pin_freq_cfg[5]} has already been configured")
+                
+                if str(pin_freq_cfg[3] + pin_freq_cfg[4]) in stm_tim_chnl:
+                    raise TimerCfg_alreadyUsed(f" the timer {pin_freq_cfg[3]} and his channel {pin_freq_cfg[4]} has already been configured")
 
-            sig_in_freq.append(sig_name)
-            stm_tim_chnl.append(str(pin_freq_cfg[3]+pin_freq_cfg[4]))
-            stm_freq_chnl_use.append(str(pin_freq_cfg[3]+ ' ' + pin_freq_cfg[4]))
-            stm_pin_used.append(sig_name)
-            # get IT Line                                     FMKCPU_TIMER_X                                         FMKCPU_CHANNEL_X
-            itline = FMKTIM_CodeGen.get_itline_from_timcnl(f'{ENUM_FMKTIM_TIMER_ROOT}_{pin_freq_cfg[3][6:]}', f'{ENUM_FMKTIM_CHANNEL_ROOT}_{pin_freq_cfg[4][8:]}')
-            var_InFreq += "        {" + "{" \
-                    + f"{ENUM_GPIO_PORT_ROOT}_{pin_freq_cfg[0][5:]}," \
-                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{pin_freq_cfg[0][5:]}")) \
-                    + f"{ENUM_GPIO_PIN_ROOT}_{pin_freq_cfg[1][4:]}" + "}," \
-                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PIN_ROOT}_{pin_freq_cfg[1][4:]}")) \
-                    + f"{pin_freq_cfg[2]}," \
-                    + " " * (SPACE_VARIABLE - len(f"{pin_freq_cfg[2]}")) \
-                    + f'{str(itline)},'\
-                    + " " * (2 * SPACE_VARIABLE - len(f"{str(itline)}")) \
-                    + f'{ENUM_ROOT_TIM_ORGN}_BSCTIM'\
-                    + "}," +  " " * (5 - len(f"{pin_freq_cfg[4][8:]}")) \
-                    + f"// {ENUM_INSIGFREQ_ROOT}_{idx + 1},\n" 
+                sig_in_freq.append(sig_name)
+                stm_tim_chnl.append(str(pin_freq_cfg[3]+pin_freq_cfg[4]))
+                stm_freq_chnl_use.append(str(pin_freq_cfg[3]+ ' ' + pin_freq_cfg[4]))
+                stm_pin_used.append(sig_name)
+                # get IT Line                                     FMKCPU_TIMER_X                                         FMKCPU_CHANNEL_X
+                itline = FMKTIM_CodeGen.get_itline_from_timcnl(f'{ENUM_FMKTIM_TIMER_ROOT}_{pin_freq_cfg[3][6:]}', f'{ENUM_FMKTIM_CHANNEL_ROOT}_{pin_freq_cfg[4][8:]}')
+                var_InFreq += "        {" + "{" \
+                        + f"{ENUM_GPIO_PORT_ROOT}_{pin_freq_cfg[0][5:]}," \
+                        + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{pin_freq_cfg[0][5:]}")) \
+                        + f"{ENUM_GPIO_PIN_ROOT}_{pin_freq_cfg[1][4:]}" + "}," \
+                        + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PIN_ROOT}_{pin_freq_cfg[1][4:]}")) \
+                        + f"{pin_freq_cfg[2]}," \
+                        + " " * (SPACE_VARIABLE - len(f"{pin_freq_cfg[2]}")) \
+                        + f'{str(itline)},'\
+                        + " " * (2 * SPACE_VARIABLE - len(f"{str(itline)}")) \
+                        + f'{ENUM_ROOT_TIM_ORGN}_BSCTIM'\
+                        + "}," +  " " * (5 - len(f"{pin_freq_cfg[4][8:]}")) \
+                        + f"// {ENUM_INSIGFREQ_ROOT}_{idx + 1},\n" 
         var_InFreq += "    };\n\n" 
         #-----------------------------------------------------------
         #-----------------make InEvnt cfg variable-------------------
@@ -338,21 +339,23 @@ class FMKIO_CodeGen():
             var_InEvnt += f"{elem_desc}" + " " * (SPACE_VARIABLE - len(elem_desc))
         var_InEvnt += "\n"
 
-        for idx, pin_evnt_cfg in enumerate(InEvnt_astr[1:]):
-            sig_name = f'P{pin_evnt_cfg[0][5:]}{pin_evnt_cfg[1][4:]}'
-            if sig_name in stm_pin_used:
-                raise GPIO_AlreadyConfgigured(f"{sig_name} has already been configured")
-            
-            sig_in_evnt.append(sig_name)
-            stm_pin_used.append(sig_name)
-            var_InEvnt += "        {" + "{" \
-                    + f"{ENUM_GPIO_PORT_ROOT}_{pin_evnt_cfg[0][5:]}," \
-                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{pin_evnt_cfg[0][5:]}")) \
-                    + f"{ENUM_GPIO_PIN_ROOT}_{pin_evnt_cfg[1][4:]}" + "}," \
-                    + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PIN_ROOT}_{pin_evnt_cfg[1][4:]}")) \
-                    + f"{ENUM_FMKCPU_NVIC_ROOT}_{str(pin_evnt_cfg[2]).upper()}" \
-                    + "}," +  " " * (25 - len(f"{pin_evnt_cfg[2]}")) \
-                    + f"// {ENUM_INSIGEVNT_ROOT}_{idx + 1},\n"
+        if str(InEvnt_astr[1][0]) != "None":
+
+            for idx, pin_evnt_cfg in enumerate(InEvnt_astr[1:]):
+                sig_name = f'P{pin_evnt_cfg[0][5:]}{pin_evnt_cfg[1][4:]}'
+                if sig_name in stm_pin_used:
+                    raise GPIO_AlreadyConfgigured(f"{sig_name} has already been configured")
+                
+                sig_in_evnt.append(sig_name)
+                stm_pin_used.append(sig_name)
+                var_InEvnt += "        {" + "{" \
+                        + f"{ENUM_GPIO_PORT_ROOT}_{pin_evnt_cfg[0][5:]}," \
+                        + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{pin_evnt_cfg[0][5:]}")) \
+                        + f"{ENUM_GPIO_PIN_ROOT}_{pin_evnt_cfg[1][4:]}" + "}," \
+                        + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PIN_ROOT}_{pin_evnt_cfg[1][4:]}")) \
+                        + f"{ENUM_FMKCPU_NVIC_ROOT}_{str(pin_evnt_cfg[2]).upper()}" \
+                        + "}," +  " " * (25 - len(f"{pin_evnt_cfg[2]}")) \
+                        + f"// {ENUM_INSIGEVNT_ROOT}_{idx + 1},\n"
         var_InEvnt += "    };\n\n"
 
         #-----------------------------------------------------------
@@ -424,19 +427,21 @@ class FMKIO_CodeGen():
         for elem_desc in OutDig_astr[0]:
             var_OutDig += f"{elem_desc}" + " " * (SPACE_VARIABLE - len(elem_desc))
         var_OutDig += "\n"
-        for idx, pin_dig_cfg in enumerate(OutDig_astr[1:]):
-            sig_name = f'P{pin_dig_cfg[0][5:]}{pin_dig_cfg[1][4:]}'
-            if sig_name in stm_pin_used:
-                    raise GPIO_AlreadyConfgigured(f"{sig_name} has already been configured")
-            
-            sig_out_dig.append(sig_name)
-            stm_pin_used.append(sig_name)
-            var_OutDig += "        {"\
-                        + f"{ENUM_GPIO_PORT_ROOT}_{pin_dig_cfg[0][5:]}," \
-                        + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{pin_dig_cfg[0][5:]}")) \
-                        + f"{ENUM_GPIO_PIN_ROOT}_{pin_dig_cfg[1][4:]}" + "}," \
-                        + " " * (5 - len(f"{pin_dig_cfg[1][4:]}")) \
-                        + f"// {ENUM_OUTSIGDIG_ROOT}_{idx + 1},\n"
+
+        if str(OutDig_astr[1][0]) != "None":
+            for idx, pin_dig_cfg in enumerate(OutDig_astr[1:]):
+                sig_name = f'P{pin_dig_cfg[0][5:]}{pin_dig_cfg[1][4:]}'
+                if sig_name in stm_pin_used:
+                        raise GPIO_AlreadyConfgigured(f"{sig_name} has already been configured")
+                
+                sig_out_dig.append(sig_name)
+                stm_pin_used.append(sig_name)
+                var_OutDig += "        {"\
+                            + f"{ENUM_GPIO_PORT_ROOT}_{pin_dig_cfg[0][5:]}," \
+                            + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{pin_dig_cfg[0][5:]}")) \
+                            + f"{ENUM_GPIO_PIN_ROOT}_{pin_dig_cfg[1][4:]}" + "}," \
+                            + " " * (5 - len(f"{pin_dig_cfg[1][4:]}")) \
+                            + f"// {ENUM_OUTSIGDIG_ROOT}_{idx + 1},\n"
         var_OutDig += "    };\n\n"
 
         #-----------------------------------------------------------
@@ -577,35 +582,35 @@ class FMKIO_CodeGen():
         #-----------------------------------------------------------
         #----------------------make enum signal---------------------
         #-----------------------------------------------------------
-        enum_ecdr = cls.code_gen.make_enum_from_variable(ENUM_FMKIO_ECDR_ROOT, [str(idx+1) for idx in range(len(encdr_cfg_astr))],
+        enum_ecdr = cls.code_gen.make_enum_from_variable(ENUM_FMKIO_ECDR_ROOT, [str(idx+1) for idx in range(len(encdr_cfg_astr)) if str(encdr_cfg_astr[0][0]) != "None"],
                                                         't_eFMKIO_InEcdrSignals', 0, 'List of signals used for Input Encoder',
                                                         [f'TI1 -> {value[0]}, TI2 -> {value[1]}, Reference to Encoder {idx + 1}' for idx,value in enumerate(ecdr_sig)])
         
-        enum_can = cls.code_gen.make_enum_from_variable(ENUM_FMKIO_CAN_ROOT, [str(idx+1) for idx in range(len(SigCan_astr[1:]))],
+        enum_can = cls.code_gen.make_enum_from_variable(ENUM_FMKIO_CAN_ROOT, [str(idx+1) for idx in range(len(SigCan_astr[1:])) if str(SigCan_astr[1][0]) != "None"],
                                                         't_eFMKIO_ComSigCan', 0, 'List of signals used for CAN communication',
                                                         [f'Rx -> {value[0]}, Tx -> {value[1]}, Reference to CAN {idx}' for idx,value in enumerate(can_sig)])
         
-        enum_serial = cls.code_gen.make_enum_from_variable(ENUM_FMKIO_SERIAL_ROOT, [str(idx+1) for idx in range(len(SigSerial_astr))],
+        enum_serial = cls.code_gen.make_enum_from_variable(ENUM_FMKIO_SERIAL_ROOT, [str(idx+1) for idx in range(len(SigSerial_astr)) if str(SigSerial_astr[0][0]) != "None"],
                                                         't_eFMKIO_ComSigSerial', 0, 'List of signals used for Serial communication',
                                                         [f'Rx -> {value[0]}, Tx -> {value[1]}, Reference to Serial {SigSerial_astr[idx][5]}' for idx,value in enumerate(serial_sig)])
         
-        enum_InAna = cls.code_gen.make_enum_from_variable(ENUM_INSIGANA_ROOT, [str(idx + 1) for idx in range((len(InAna_astr[1:])))],
+        enum_InAna = cls.code_gen.make_enum_from_variable(ENUM_INSIGANA_ROOT, [str(idx + 1) for idx in range((len(InAna_astr[1:]))) if str(InAna_astr[1][0]) != "None"],
                                                             "t_eFMKIO_InAnaSig", 0, "List of input Analog pin available on this board",
                                                             [f'Reference to {sig_name}' for sig_name in sig_in_ana])
         
-        enum_InDig = cls.code_gen.make_enum_from_variable(ENUM_INSIGDIG_ROOT, [str(idx + 1) for idx in range((len(InDig_astr[1:])))],
+        enum_InDig = cls.code_gen.make_enum_from_variable(ENUM_INSIGDIG_ROOT, [str(idx + 1) for idx in range((len(InDig_astr[1:]))) if str(InDig_astr[1][0]) != "None"],
                                                             "t_eFMKIO_InDigSig", 0, "/List of input digital pin available on this board",
                                                             [f'Reference to {sig_name}' for sig_name in sig_in_dig])
         
-        enum_InFreq = cls.code_gen.make_enum_from_variable(ENUM_INSIGFREQ_ROOT, [str(idx + 1) for idx in range((len(InFreq_astr[1:])))],
+        enum_InFreq = cls.code_gen.make_enum_from_variable(ENUM_INSIGFREQ_ROOT, [str(idx + 1) for idx in range((len(InFreq_astr[1:]))) if str(InFreq_astr[1][0]) != "None"],
                                                             "t_eFMKIO_InFreqSig", 0, "List of input frequency pin available on this board",
                                                             [f'Reference to {sig_name}, {stm_freq_chnl_use[idx]}' for idx, sig_name in enumerate(sig_in_freq)])
         
-        enum_InEvnt = cls.code_gen.make_enum_from_variable(ENUM_INSIGEVNT_ROOT, [str(idx + 1) for idx in range((len(InEvnt_astr[1:])))],
+        enum_InEvnt = cls.code_gen.make_enum_from_variable(ENUM_INSIGEVNT_ROOT, [str(idx + 1) for idx in range((len(InEvnt_astr[1:]))) if str(InEvnt_astr[1][0]) != "None"],
                                                             "t_eFMKIO_InEvntSig", 0, "List of input event pin available on this board",
                                                             [f'Reference to {sig_name}' for sig_name in sig_in_evnt])
         
-        enum_OutDig = cls.code_gen.make_enum_from_variable(ENUM_OUTSIGDIG_ROOT, [str(idx + 1) for idx in range((len(OutDig_astr[1:])))],
+        enum_OutDig = cls.code_gen.make_enum_from_variable(ENUM_OUTSIGDIG_ROOT, [str(idx + 1) for idx in range((len(OutDig_astr[1:]))) if str(OutDig_astr[1][0]) != "None"],
                                                             "t_eFMKIO_OutDigSig", 0, "List of output digital pin available on this board",
                                                             [f'Reference to {sig_name}' for sig_name in sig_out_dig])
         for idx, info_pwm in enumerate(OutPWM_astr[1:]):
