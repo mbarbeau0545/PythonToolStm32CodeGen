@@ -273,19 +273,20 @@ class FMKIO_CodeGen():
             var_InDig += f"{elem_desc}" + " " * (SPACE_VARIABLE - len(elem_desc))
         var_InDig += "\n"
 
-        for idx, pin_dig_cfg in enumerate(InDig_astr[1:]):
-            sig_name = f'P{pin_dig_cfg[0][5:]}{pin_dig_cfg[1][4:]}'
-            if sig_name in stm_pin_used:
-                raise GPIO_AlreadyConfgigured(f"{sig_name} has already been configured") 
-            
-            sig_in_dig.append(sig_name)
-            stm_pin_used.append(sig_name)
-            var_InDig +="        {"\
-                        + f"{ENUM_GPIO_PORT_ROOT}_{pin_dig_cfg[0][5:]}," \
-                        + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{pin_dig_cfg[0][5:]}")) \
-                        + f"{ENUM_GPIO_PIN_ROOT}_{pin_dig_cfg[1][4:]}" + "}," \
-                        + " " * (5 - len(f"{pin_dig_cfg[1][4:]}")) \
-                        + f"// {ENUM_INSIGDIG_ROOT}_{idx + 1},\n"
+        if str(InDig_astr[1][0]) != "None":
+            for idx, pin_dig_cfg in enumerate(InDig_astr[1:]):
+                sig_name = f'P{pin_dig_cfg[0][5:]}{pin_dig_cfg[1][4:]}'
+                if sig_name in stm_pin_used:
+                    raise GPIO_AlreadyConfgigured(f"{sig_name} has already been configured") 
+                
+                sig_in_dig.append(sig_name)
+                stm_pin_used.append(sig_name)
+                var_InDig +="        {"\
+                            + f"{ENUM_GPIO_PORT_ROOT}_{pin_dig_cfg[0][5:]}," \
+                            + " " * (SPACE_VARIABLE - len(f"{ENUM_GPIO_PORT_ROOT}_{pin_dig_cfg[0][5:]}")) \
+                            + f"{ENUM_GPIO_PIN_ROOT}_{pin_dig_cfg[1][4:]}" + "}," \
+                            + " " * (5 - len(f"{pin_dig_cfg[1][4:]}")) \
+                            + f"// {ENUM_INSIGDIG_ROOT}_{idx + 1},\n"   
         var_InDig += "    };\n\n"
         #-----------------------------------------------------------
         #-----------------make InFreq cfg variable-------------------
