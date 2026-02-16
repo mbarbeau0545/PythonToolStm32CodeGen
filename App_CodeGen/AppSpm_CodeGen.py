@@ -84,7 +84,7 @@ class AppSpm_CodeGen():
                 signal_related = "APPSIG_SIGNAL_NB"
             else: 
                 if len(item_cfg[9]) > 32:
-                    raise ValueError(f'Signal is too long, max is 32, get {len(item_cfg[9])}')
+                    raise ValueError(f'{item_cfg[9]} is too long, max is 32, get {len(item_cfg[9])}')
                 signal_related = f"APPSIG_SIGNAL_{item_cfg[9]}"
 
             var_prm += f'    [{APPSPM_ENUM_ROOT_PARAM}_{item_cfg[1]}] = ' + '{\n'\

@@ -145,7 +145,7 @@ class AppSig_CodeGen():
                             + ' ' * ((SIG_SPACE_VARIABLE) - len(f'{signal_cfg["encoding"]},'))\
                             + f'(t_float32){signal_cfg["factor"]},'\
                             + ' ' * ((SIG_SPACE_VARIABLE) - len(f"{signal_cfg['factor']},"))\
-                            + f'(t_sint16){signal_cfg["offset"]}'\
+                            + f'(t_sint32){signal_cfg["offset"]}'\
                             + ' ' * ((SIG_SPACE_VARIABLE) - len(f"{signal_cfg['offset']}"))\
                             + '},' + f'// APPSIG_SIGNAL_{str(signal_name).upper()}\n'
         codgen_sigCfg += '    };\n\n'
