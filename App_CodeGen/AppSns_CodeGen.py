@@ -79,12 +79,14 @@ class AppSns_CodeGen():
         var_sns_if = ""
         var_drv = ""
         var_unities = ""
+        enum_cal_if = ""
+        var_cal_cfg = ""
         uds_sns_data = {}
         uds_sns_data["SENSORS"] = {}
         #-----------------------------------------------------------------
         #-----------------------------make all enum-----------------------
         #-----------------------------------------------------------------
-        if str(sns_interface_cfg_a[0][0]) != EMPTY_CELL:
+        if str(sns_interface_cfg_a[0][0]) is not None:
             enum_sns = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_SNSS_RT, [f"{sns_cfg[0]}_{sns_cfg[1]}" for sns_cfg in sns_interface_cfg_a],
                                                             "t_eAPPSNS_SnsInterface", 0, "Enum for Sensors list",
                                                             [f"Sensors Device {sns_cfg[0]}, Interface {sns_cfg[1]}, {sns_cfg[-1]}"  for sns_cfg in sns_interface_cfg_a])
@@ -94,7 +96,7 @@ class AppSns_CodeGen():
                                                             [])
 
         
-        if str(drivers_cfg_a[0][0]) != EMPTY_CELL:
+        if str(drivers_cfg_a[0][0]) is not None:
             enum_drv = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_DRV_RT, [str(drv_cfg[0]).upper() for drv_cfg in drivers_cfg_a],
                                                         "t_eAPPSNS_SnsDriverList", 0, "Enum for Sensors drivers list",
                                                         [str(drv_cfg[-1])  for drv_cfg in drivers_cfg_a])
@@ -121,7 +123,7 @@ class AppSns_CodeGen():
 
             if len(sns_cfg[3]) > 32:
                 raise ValueError(f'{sns_cfg[3]} is to long to be open in PCAN Symbol, get {len(sns_cfg[3])} expect less than 32')
-            if str(sns_cfg[0]) != EMPTY_CELL:
+            if str(sns_cfg[0]) is not None:
                 # make var sensors
                 var_sns_if += "        {" \
                             + f"APPSNS_SNSDVC_{sns_cfg[0]},"\
@@ -186,7 +188,7 @@ class AppSns_CodeGen():
         var_drv += "    /**< Variable for System Sensors drivers functions*/\n" \
                     + "    const t_sAPPSNS_SysDrvFunc c_AppSns_SysDrv_as[APPSNS_DRV_NB] = {\n"
         for drv_cfg in drivers_cfg_a:
-            if str(drv_cfg[0]) != EMPTY_CELL:
+            if str(drv_cfg[0]) is not None:
                 var_drv += "        {" 
                 if "Yes" in str(drv_cfg[1]):
                     var_drv += f"(t_cbAppSns_DrvInit *){drv_cfg[0]}_Init,"
@@ -230,6 +232,34 @@ class AppSns_CodeGen():
         cls.code_gen._write_into_file(var_sns_if, APPSNS_CONFIGPRIVATE_PATH)
         cls.code_gen.change_target_balise(TARGET_T_INCLUDE_START, TARGET_T_INCLUDE_END)
         cls.code_gen._write_into_file(include_sns, APPSNS_CONFIGPRIVATE_PATH)
+
+        #-----------------------------------------------------------------
+        #------------------make APPSNSCAL code gen------------------------
+        #-----------------------------------------------------------------
+        
+            
+        var_cal_cfg += "    ///@brief Default calibration values per sensor interface.\n" \
+                       + "    const t_sAPPSNSCAL_CalibCfg c_AppSnsCal_CalibCfg_as[APPSNS_SNSITF_NB] = {\n"
+        for snscal_cfg in sns_interface_cfg_a:
+            calib_mode = f"APPSNSCAL_CALMODE_{snscal_cfg[4]}" if snscal_cfg[4] is not None else 'APPSNSCAL_CALMODE_NB'
+            default_offset = str(float(snscal_cfg[5])) if snscal_cfg[5] is not None else '0.0'
+            default_gain = str(float(snscal_cfg[6])) if snscal_cfg[6] is not None else '1.0'
+            prm_id_offset = str(snscal_cfg[7]) if snscal_cfg[7] is not None else 'NB'
+            prm_id_gain = str(snscal_cfg[8]) if snscal_cfg[8] is not None else 'NB'
+            
+            var_cal_cfg += f"        [APPSNS_SNSITF_{snscal_cfg[0]}_{snscal_cfg[1]}] ="+ '{\n'\
+                        + f"            .mode_e = {calib_mode},\n"\
+                        + f"            .offset_f32 = (t_float32){default_offset},\n"\
+                        + f"            .gain_f32 = (t_float32){default_gain},\n"\
+                        + f"            .prmOffsetID_e = APPSPM_PRM_{prm_id_offset},\n"\
+                        + f"            .prmGainID_e = APPSPM_PRM_{prm_id_gain},\n"\
+                        +  "        },\n"
+                        
+        var_cal_cfg += "    };\n\n"
+
+        print('[INFO] : APPSNS_Codegen -> APPSNSCAL Config Private Code Generation')
+        cls.code_gen.change_target_balise(TARGET_T_VARIABLE_START_LINE, TARGET_T_VARIABLE_END_LINE)
+        cls.code_gen._write_into_file(var_cal_cfg, APPSNSCAL_CONFIGPRIVATE_PATH)
     
     @classmethod
     def make_header_src_file(cls,f_snslist_cfg, f_sns_name:str):

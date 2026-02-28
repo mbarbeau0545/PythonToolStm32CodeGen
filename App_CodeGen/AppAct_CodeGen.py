@@ -72,7 +72,7 @@ class AppAct_CodeGen():
         #-----------------------------------------------------------------
         #-----------------------------make all enum-----------------------
         #-----------------------------------------------------------------
-        if str(act_interface_cfg_a[0][0]) != EMPTY_CELL:
+        if str(act_interface_cfg_a[0][0]) is not None:
             enum_act = cls.code_gen.make_enum_from_variable(ENUM_APPACT_ACTUATOR_RT, [f"{act_cfg[0]}_{act_cfg[1]}" for act_cfg in act_interface_cfg_a],
                                                             "t_eAPPACT_ActInterface", 0, "Enum for Actuators list",
                                                             [f"Actuator Device {act_cfg[0]}, Interface {act_cfg[1]}, {act_cfg[-1]}"  for act_cfg in act_interface_cfg_a])
@@ -82,7 +82,7 @@ class AppAct_CodeGen():
                                                             [])
 
         
-        if str(drivers_cfg_a[0][0]) != EMPTY_CELL:
+        if str(drivers_cfg_a[0][0]) is not None:
             enum_drv = cls.code_gen.make_enum_from_variable(ENUM_APPACT_DRV_RT, [str(drv_cfg[0]).upper() for drv_cfg in drivers_cfg_a],
                                                         "t_eAPPACT_ActDriverList", 0, "Enum for Actuators drivers list",
                                                         [str(drv_cfg[-1])  for drv_cfg in drivers_cfg_a])
@@ -116,7 +116,7 @@ class AppAct_CodeGen():
             if len(act_cfg[4]) > 32:
                 raise ValueError(f'{act_cfg[4]} is to long to be open in PCAN Symbol,  get {len(act_cfg[4])} expect less than 32')
             
-            if str(act_cfg[0]) != EMPTY_CELL:
+            if str(act_cfg[0]) is not None:
                 # make var sensors
                 var_act_if += "        {" \
                             + f"APPACT_ACTDVC_{act_cfg[0]},"\
@@ -183,7 +183,7 @@ class AppAct_CodeGen():
         var_drv_state += "/**< Variable for Actuators Drivers State*/\n"
         var_drv_state += "t_eAPPACT_DrvState g_ActDrvState_ae[APPACT_DRV_NB] = {\n"
         for drv_cfg in drivers_cfg_a:
-            if str(drv_cfg[0]) != EMPTY_CELL:
+            if str(drv_cfg[0]) is not None:
                 var_drv += "        {" 
                 if "Yes" in str(drv_cfg[1]):
                     var_drv += f"(t_cbAppAct_DrvInit *){drv_cfg[0]}_Init,"

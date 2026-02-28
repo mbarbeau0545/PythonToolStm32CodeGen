@@ -68,7 +68,7 @@ class AppSpm_CodeGen():
         #-----------------------------------------------------------------
         #-----------------------------make all enum-----------------------
         #-----------------------------------------------------------------
-        if str(item_prm_a[0][0] != EMPTY_CELL):
+        if str(item_prm_a[0][0] is not None):
             enum_prm = cls.code_gen.make_enum_from_variable(APPSPM_ENUM_ROOT_PARAM, [str(prm_cfg[1]).upper() for prm_cfg in item_prm_a],
                                                             't_eAPPSPM_ItemPrm', 0, 'Enum for listong every parameter',
                                                             [])
