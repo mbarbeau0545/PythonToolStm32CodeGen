@@ -240,8 +240,9 @@ class AppSig_CodeGen():
                                 + f'((t_uint32){msgid_hexvalue})\n'
 
                 # multi ecu managment
-                if len(msg_cfg['msg_direction']) != nb_ecu:
-                        raise ValueError(f'Expected {nb_ecu} direction, get {len(msg_cfg["msg_direction"])}\n {print(msg_cfg["msg_direction"])}')
+                if nb_ecu != 1\
+                and len(msg_cfg['msg_direction']) != nb_ecu:
+                        raise ValueError(f'Expected {nb_ecu} direction, get {len(msg_cfg["msg_direction"])}\n get {print(msg_cfg["msg_direction"])} for {msg_name}')
                 
                 # build the direction variable 
                 direction_str = "{"
@@ -407,7 +408,7 @@ class AppSig_CodeGen():
                                 cls.symbol[current_symbol]['msg_type'] = current_type
 
                                 # multi ecu managment 
-                                if match_id.group(3) != "":
+                                if match_id.group(3) != "" and match_id.group(3) is not None:
                                     multi_msg_dir = []
                                     for dir_cfg in str(match_id.group(3)).replace(" ", "").split(","):
                                         dir_value = str(dir_cfg.split(":")[1])
