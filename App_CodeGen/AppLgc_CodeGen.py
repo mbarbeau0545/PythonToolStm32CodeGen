@@ -80,7 +80,7 @@ class AppLgc_CodeGen():
                     + "    {\n"
 
         var_agent += "    /**\n" + "    * @brief Agent Configuration Function\n" + "    */\n"\
-                    + f'    const t_sAPPLGC_AgentFunc c_AppLGc_AgentInfo_as[{APPLGC_ENUM_AGENT}_NB] =' + '{\n'
+                    + f'    const t_sAPPLGC_AgentFunc c_AppLgc_AgentInfo_as[{APPLGC_ENUM_AGENT}_NB] =' + '{\n'
         
         for idx_agt, agent_info in enumerate(agent_cfg_a):
             if str(agent_info[0]) != 'None':
