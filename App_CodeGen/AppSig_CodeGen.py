@@ -442,9 +442,10 @@ class AppSig_CodeGen():
                         # Nouveau bloc : CycleTime
                         if line.strip().lower().startswith("cycletime="):
                             cycle_val = int(line.strip().split("=")[1].strip())
-                            if current_symbol and (current_read == 'SEND' or current_read == 'SENDRECEIVE') :
+                            if current_symbol and (cls.symbol[current_symbol]['msg_direction'] == 'SEND' 
+                                                   or cls.symbol[current_symbol]['msg_direction'] == 'SENDRECEIVE') :
                                 if cycle_val == 0:
-                                    raise ValueError(f"CycleTime cannot be 0 for symbol '{current_symbol}'")
+                                    raise ValueError(f"CycleTime cannot be 0 for symbol '{cls.symbol[current_symbol]['msg_direction']}'")
                                 cls.symbol[current_symbol]['cycle_time'] = cycle_val
                             continue
 
