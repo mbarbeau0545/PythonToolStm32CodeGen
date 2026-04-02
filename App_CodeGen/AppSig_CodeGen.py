@@ -46,7 +46,10 @@ PATTERN_SIGNAL = re.compile(
 
 # Expressions régulières nécessaires
 PATTERN_SYM_ID = re.compile(
-    r'ID=([0-9A-Fa-f]+)h\s*//\s*(\w+)\s*(.*)'
+    r'ID=([0-9A-Fa-f]+)h'
+    r'(?:\s*//\s*(\w+)\s*(.*?))?'
+    r'(?:\s*--\s*(ON_CHANGE|FORCE))?'
+    r'\s*$'
 )
 PATTERN_SYM_LEN = re.compile(r'Len=(\d+)')
 PATTERN_SYM_SIG = re.compile(r'Sig=(\w+)\s+(\d+)')
@@ -58,6 +61,11 @@ MSG_TYPE_MAPPING = {
     'UNUSED' : 'APPSIG_MSG_DIR_UNUSED'
 }
 
+MSG_TX_POLICY_MAPPING = {
+    "ON_CHANGE" : "APPSIG_TX_POLICY_ONCHANGE",
+    "FORCE" : "APPSIG_TX_POLICY_FORCE",
+    "DEFAULT" : "APPSIG_TX_POLICY_NB"
+}
 SIG_SPACE_VARIABLE = 55
 #------------------------------------------------------------------------------
 #                                       CLASS
@@ -87,6 +95,18 @@ class AppSig_CodeGen():
         'CAN' : []
     }
     file_cfg_path:str = ''
+
+    @staticmethod
+    def _has_tx_direction(msg_direction) -> bool:
+        if isinstance(msg_direction, list):
+            return any(direction in ('SEND', 'SENDRECEIVE') for direction in msg_direction)
+        return msg_direction in ('SEND', 'SENDRECEIVE')
+
+    @staticmethod
+    def _has_rx_direction(msg_direction) -> bool:
+        if isinstance(msg_direction, list):
+            return any(direction in ('RECEIVE', 'SENDRECEIVE') for direction in msg_direction)
+        return msg_direction in ('RECEIVE', 'SENDRECEIVE')
 
     @classmethod
     def code_generation(cls, f_software_cfg:str, f_msg_cfg_file:str) -> None:
@@ -209,6 +229,8 @@ class AppSig_CodeGen():
                 codgen_srlmsg_cfg += '        {'\
                                     + f'APPSIG_SRL_ID_{str(msg_name).upper()},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"APPSIG_SRL_ID_{str(msg_name).upper()}"))\
+                                    + f'{MSG_TX_POLICY_MAPPING[msg_cfg["tx_policy"]]},'\
+                                    + ' ' * ((SIG_SPACE_VARIABLE) - len(f'{MSG_TX_POLICY_MAPPING[msg_cfg["tx_policy"]]},'))\
                                     + f'{direction_str},          '\
                                     + f'(t_uint16){msg_cfg["cycle_time"]},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"(t_uint16){msg_cfg['cycle_time']}"))\
@@ -259,6 +281,8 @@ class AppSig_CodeGen():
                 codgen_canmsg_cfg += '    {'\
                                     + f'APPSIG_CAN_ID_{str(msg_name).upper()},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"APPSIG_CAN_ID_{msg_name}"))\
+                                    + f'{MSG_TX_POLICY_MAPPING[msg_cfg["tx_policy"]]},'\
+                                    + ' ' * ((SIG_SPACE_VARIABLE) - len(f'{MSG_TX_POLICY_MAPPING[msg_cfg["tx_policy"]]},'))\
                                     + f'{direction_str},          '\
                                     + f'(t_uint16){msg_cfg["cycle_time"]},'\
                                     + ' ' * ((SIG_SPACE_VARIABLE) - len(f"(t_uint16){msg_cfg['cycle_time']}"))\
@@ -383,6 +407,7 @@ class AppSig_CodeGen():
                                 'msg_len': None,
                                 'msg_type': None,
                                 'msg_direction': current_read,
+                                'tx_policy': 'DEFAULT',
                                 'signals': {},
                                 'timeout': 0,
                                 'cycle_time': None  # <-- Ajouté ici
@@ -394,6 +419,7 @@ class AppSig_CodeGen():
                         if match_id:
                             current_id = match_id.group(1)
                             current_type = match_id.group(2)
+                            current_policy = match_id.group(4) if match_id.group(4) else 'DEFAULT'
 
                             if current_type not in cls.list_id:
                                 cls.list_id[current_type] = []
@@ -406,6 +432,7 @@ class AppSig_CodeGen():
                             if current_symbol:
                                 cls.symbol[current_symbol]['msg_id'] = current_id
                                 cls.symbol[current_symbol]['msg_type'] = current_type
+                                cls.symbol[current_symbol]['tx_policy'] = current_policy
 
                                 # multi ecu managment 
                                 if match_id.group(3) != "" and match_id.group(3) is not None:
@@ -442,8 +469,7 @@ class AppSig_CodeGen():
                         # Nouveau bloc : CycleTime
                         if line.strip().lower().startswith("cycletime="):
                             cycle_val = int(line.strip().split("=")[1].strip())
-                            if current_symbol and (cls.symbol[current_symbol]['msg_direction'] == 'SEND' 
-                                                   or cls.symbol[current_symbol]['msg_direction'] == 'SENDRECEIVE') :
+                            if current_symbol and cls._has_tx_direction(cls.symbol[current_symbol]['msg_direction']):
                                 if cycle_val == 0:
                                     raise ValueError(f"CycleTime cannot be 0 for symbol '{cls.symbol[current_symbol]['msg_direction']}'")
                                 cls.symbol[current_symbol]['cycle_time'] = cycle_val
@@ -482,10 +508,10 @@ class AppSig_CodeGen():
 
             if current_symbol:
                 sym = cls.symbol[current_symbol]
-                if sym['msg_direction'] == 'RECEIVE' or sym['msg_direction'] == 'SENDRECEIVE':
+                if cls._has_rx_direction(sym['msg_direction']):
                     if sym['timeout'] is None:
                         raise ValueError(f"Missing Timeout for last symbol '{current_symbol}'")
-                if sym['msg_direction'] == 'SEND' or sym['msg_direction'] == 'SENDRECEIVE':
+                if cls._has_tx_direction(sym['msg_direction']):
                     if sym['cycle_time'] is None:
                         raise ValueError(f"Missing CycleTime for last symbol '{current_symbol}'")
         #-----------------------------------------------------------------
