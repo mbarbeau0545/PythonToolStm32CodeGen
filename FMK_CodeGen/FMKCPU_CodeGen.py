@@ -209,9 +209,12 @@ class FMKCPU_CodeGen():
         #----------------------------------------------------------------
         # only takes tha family for include function
         cls.cpu_family = str(cpu_cfg).upper()[5:7]
-
+        
         if cls.cpu_family not in CPU_FAMILY_MANAGE:
             raise Exception(f'{cls.cpu_family} not handle')
+        
+        print(f"Hardware code generation made for {cls.cpu_family}")
+        
         cpu_function =   f'    #include "{str(cpu_cfg)[:7]}xx_hal.h"\n'
         include_cpu_hw = f'    #include "{cpu_cfg}.h"\n'
         include_cpu = cpu_function + include_cpu_hw
@@ -410,7 +413,7 @@ class FMKCPU_CodeGen():
                 # Look for channel Idx
                 for char in str(irqn_info[0][5:]):
                     if char.isdigit():
-                        dma_irqn_hdler   += f'        HAL_DMA_IRQHandler(FMKCPU_PRIVATE_GetHandleTypeDef({ENUM_FMKCPU_DMA_CTRL}_{idx_dma}, {ENUM_FMKCPU_DMA_CHANNEL}_{char}));\n'
+                        dma_irqn_hdler   += f'        HAL_DMA_IRQHandler(FMKCPU_PRIVATE_GetHandleTypeDef({ENUM_FMKCPU_DMA_CTRL}_{idx_dma}, {ENUM_FMKCPU_DMA_CHANNEL}_{(int(char) + 1)}));\n'
 
                 dma_irqn_hdler += '    return;\n    }\n\n'
         

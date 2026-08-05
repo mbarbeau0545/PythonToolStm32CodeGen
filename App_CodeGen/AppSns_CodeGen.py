@@ -66,9 +66,14 @@ class AppSns_CodeGen():
         
         # Load needed excel arrays
         cls.code_gen.load_excel_file(f_software_cfg)
-        sns_interface_cfg_a = cls.code_gen.get_array_from_excel("AppSns_SnsInterface")[1:]
-        drivers_cfg_a = cls.code_gen.get_array_from_excel("AppSns_DriverList")[1:]
-        unities_cfg_a = cls.code_gen.get_array_from_excel("AppSns_Unities")[1:]
+        sns_interface_raw_a = cls.code_gen.get_array_from_excel("AppSns_SnsInterface")
+        drivers_raw_a = cls.code_gen.get_array_from_excel("AppSns_DriverList")
+        unities_raw_a = cls.code_gen.get_array_from_excel("AppSns_Unities")
+        appsys_opt_raw_a = cls.code_gen.get_array_from_excel("APPSYS_SysOptListEnum")
+        sns_interface_cfg_a = sns_interface_raw_a[1:] if sns_interface_raw_a is not None else []
+        drivers_cfg_a = drivers_raw_a[1:] if drivers_raw_a is not None else []
+        unities_cfg_a = unities_raw_a[1:] if unities_raw_a is not None else []
+        appsys_opt_cfg_a = appsys_opt_raw_a[1:] if appsys_opt_raw_a is not None else []
         # make python varaible 
         enum_sns = ""
         enum_drv = ""
@@ -83,31 +88,49 @@ class AppSns_CodeGen():
         var_cal_cfg = ""
         uds_sns_data = {}
         uds_sns_data["SENSORS"] = {}
+        valid_sns_interface_cfg_a = [sns_cfg for sns_cfg in sns_interface_cfg_a if sns_cfg and sns_cfg[0] not in (None, 'None', '') and sns_cfg[1] not in (None, 'None', '')]
+        valid_drivers_cfg_a = [drv_cfg for drv_cfg in drivers_cfg_a if drv_cfg and drv_cfg[0] not in (None, 'None', '')]
+        valid_unities_cfg_a = [unity for unity in unities_cfg_a if unity and unity[0] not in (None, 'None', '')]
+        has_sns_interface_b = any(sns_cfg and sns_cfg[0] not in (None, 'None', '') for sns_cfg in sns_interface_cfg_a)
+        has_driver_cfg_b = any(drv_cfg and drv_cfg[0] not in (None, 'None', '') for drv_cfg in drivers_cfg_a)
+        has_unity_cfg_b = any(unity and unity[0] not in (None, 'None', '') for unity in unities_cfg_a)
+        sns_opt_id_set = set()
+        for option_info in appsys_opt_cfg_a:
+            if not option_info or option_info[0] in (None, 'None', ''):
+                continue
+            option_name = str(option_info[0]).upper()
+            if option_name.startswith("SNS_"):
+                sns_opt_id_set.add(option_name)
         #-----------------------------------------------------------------
         #-----------------------------make all enum-----------------------
         #-----------------------------------------------------------------
-        if str(sns_interface_cfg_a[0][0]) is not None:
-            enum_sns = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_SNSS_RT, [f"{sns_cfg[0]}_{sns_cfg[1]}" for sns_cfg in sns_interface_cfg_a],
+        if has_sns_interface_b:
+            enum_sns = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_SNSS_RT, [f"{sns_cfg[0]}_{sns_cfg[1]}" for sns_cfg in valid_sns_interface_cfg_a],
                                                             "t_eAPPSNS_SnsInterface", 0, "Enum for Sensors list",
-                                                            [f"Sensors Device {sns_cfg[0]}, Interface {sns_cfg[1]}, {sns_cfg[-1]}"  for sns_cfg in sns_interface_cfg_a])
+                                                            [f"Sensors Device {sns_cfg[0]}, Interface {sns_cfg[1]}, {sns_cfg[-1]}"  for sns_cfg in valid_sns_interface_cfg_a])
         else:
             enum_sns = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_SNSS_RT, [],
                                                             "t_eAPPSNS_SnsInterface", 0, "Enum for Sensors Interface list",
                                                             [])
 
         
-        if str(drivers_cfg_a[0][0]) is not None:
-            enum_drv = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_DRV_RT, [str(drv_cfg[0]).upper() for drv_cfg in drivers_cfg_a],
+        if has_driver_cfg_b:
+            enum_drv = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_DRV_RT, [str(drv_cfg[0]).upper() for drv_cfg in valid_drivers_cfg_a],
                                                         "t_eAPPSNS_SnsDriverList", 0, "Enum for Sensors drivers list",
-                                                        [str(drv_cfg[-1])  for drv_cfg in drivers_cfg_a])
+                                                        [str(drv_cfg[-1])  for drv_cfg in valid_drivers_cfg_a])
         else:
             enum_drv = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_DRV_RT, [],
                                                         "t_eAPPSNS_SnsDriverList", 0, "Enum for Sensors drivers list",
                                                         [])
         
-        enum_unity = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_UNITY_RT, [str(unity[0]).upper() for unity in unities_cfg_a],
-                                                        "t_eAPPSNS_SnsMeasType", 0, "Enum for sensor conversion list",
-                                                        [str(unity[-1])  for unity in unities_cfg_a])
+        if has_unity_cfg_b:
+            enum_unity = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_UNITY_RT, [str(unity[0]).upper() for unity in valid_unities_cfg_a],
+                                                            "t_eAPPSNS_SnsMeasType", 0, "Enum for sensor conversion list",
+                                                            [str(unity[-1])  for unity in valid_unities_cfg_a])
+        else:
+            enum_unity = cls.code_gen.make_enum_from_variable(ENUM_APPSNS_UNITY_RT, [],
+                                                            "t_eAPPSNS_SnsMeasType", 0, "Enum for sensor conversion list",
+                                                            [])
         #-----------------------------------------------------------------
         #--------------------make var sns/state/ include------------------
         #-----------------------------Make Header/Src fil-----------------
@@ -118,6 +141,8 @@ class AppSns_CodeGen():
                     + "    const t_sAPPSNS_SnsDvcOpeCfg c_AppSns_SnsDvcOpeCfg_as[APPSNS_SNSDVC_NB] = {\n"
         sns_dvc_list = []
         for idx, sns_cfg in enumerate(sns_interface_cfg_a):
+            if not sns_cfg or sns_cfg[0] in (None, 'None', '') or sns_cfg[1] in (None, 'None', ''):
+                continue
             if sns_cfg[3] == None or sns_cfg[3] == 'None':
                 sns_cfg[3] = 'NB'
 
@@ -150,13 +175,14 @@ class AppSns_CodeGen():
 
                 if sns_cfg[0] not in sns_dvc_list:
                     sns_dvc_list.append(sns_cfg[0])
-                    var_sns_dvc += '        {'\
-                                + f'APPSYS_OPT_ID_SNS_{sns_cfg[0]},'\
-                                + " " * ((SPACE_VARIABLE * 2) - len(f"APPSYS_OPT_ID_SNS_{sns_cfg[0]}"))\
-                                + f'{VAR_APPSNS_SPEC}_{sns_cfg[0]}_SetCfg'\
-                                + '},'\
-                                + " " * ((SPACE_VARIABLE * 2) - len(f'{VAR_APPSNS_SPEC}_{sns_cfg[0]}_SetCfg'))\
-                                + f' // APPSNS_SNSDVC_{sns_cfg[0]}\n'
+                    if f"SNS_{str(sns_cfg[0]).upper()}" in sns_opt_id_set:
+                        var_sns_dvc += '        {'\
+                                    + f'APPSYS_OPT_ID_SNS_{sns_cfg[0]},'\
+                                    + " " * ((SPACE_VARIABLE * 2) - len(f"APPSYS_OPT_ID_SNS_{sns_cfg[0]}"))\
+                                    + f'{VAR_APPSNS_SPEC}_{sns_cfg[0]}_SetCfg'\
+                                    + '},'\
+                                    + " " * ((SPACE_VARIABLE * 2) - len(f'{VAR_APPSNS_SPEC}_{sns_cfg[0]}_SetCfg'))\
+                                    + f' // APPSNS_SNSDVC_{sns_cfg[0]}\n'
                 # uds cfg 
                 if f_is_uds_ope:
                     uds_sns_data["SENSORS"][str(sns_cfg[0]).upper()] = {
@@ -188,7 +214,7 @@ class AppSns_CodeGen():
         var_drv += "    /**< Variable for System Sensors drivers functions*/\n" \
                     + "    const t_sAPPSNS_SysDrvFunc c_AppSns_SysDrv_as[APPSNS_DRV_NB] = {\n"
         for drv_cfg in drivers_cfg_a:
-            if str(drv_cfg[0]) is not None:
+            if drv_cfg[0] not in (None, 'None', ''):
                 var_drv += "        {" 
                 if "Yes" in str(drv_cfg[1]):
                     var_drv += f"(t_cbAppSns_DrvInit *){drv_cfg[0]}_Init,"
@@ -241,6 +267,8 @@ class AppSns_CodeGen():
         var_cal_cfg += "    ///@brief Default calibration values per sensor interface.\n" \
                        + "    const t_sAPPSNSCAL_CalibCfg c_AppSnsCal_CalibCfg_as[APPSNS_SNSITF_NB] = {\n"
         for snscal_cfg in sns_interface_cfg_a:
+            if not snscal_cfg or snscal_cfg[0] in (None, 'None', '') or snscal_cfg[1] in (None, 'None', ''):
+                continue
             calib_mode = f"APPSNSCAL_CALMODE_{snscal_cfg[4]}" if snscal_cfg[4] is not None else 'APPSNSCAL_CALMODE_NB'
             default_offset = str(float(snscal_cfg[5])) if snscal_cfg[5] is not None else '0.0'
             default_gain = str(float(snscal_cfg[6])) if snscal_cfg[6] is not None else '1.0'

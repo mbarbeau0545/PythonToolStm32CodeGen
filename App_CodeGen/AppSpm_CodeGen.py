@@ -57,10 +57,18 @@ class AppSpm_CodeGen():
 
     @classmethod
     def code_generation(cls, f_software_cfg, f_udscfg_path, f_is_uds_ope= False) -> None:
-        # Load needed excel arrays
-        cls.code_gen.load_excel_file(f_software_cfg)
+        item_prm_raw_a = None
+        if isinstance(f_software_cfg, str) and os.path.isfile(f_software_cfg) and os.path.getsize(f_software_cfg) > 0:
+            try:
+                cls.code_gen.load_excel_file(f_software_cfg)
+                item_prm_raw_a = cls.code_gen.get_array_from_excel("AppSpm_PrmInfo")
+            except Exception as exc:
+                print(f"[WARNING] : APPSPM_Codegen -> invalid or unreadable config file '{f_software_cfg}', generate minimal code ({exc})")
+        else:
+            print(f"[WARNING] : APPSPM_Codegen -> config file missing or empty '{f_software_cfg}', generate minimal code")
 
-        item_prm_a = cls.code_gen.get_array_from_excel("AppSpm_PrmInfo")[1:]
+        item_prm_a = item_prm_raw_a[1:] if item_prm_raw_a is not None else []
+        valid_item_prm_a = [prm_cfg for prm_cfg in item_prm_a if prm_cfg and len(prm_cfg) > 1 and prm_cfg[1] not in (None, 'None', '')]
         enum_prm = ''
         var_prm = ''
         uds_item_prm = {}
@@ -68,8 +76,8 @@ class AppSpm_CodeGen():
         #-----------------------------------------------------------------
         #-----------------------------make all enum-----------------------
         #-----------------------------------------------------------------
-        if str(item_prm_a[0][0] is not None):
-            enum_prm = cls.code_gen.make_enum_from_variable(APPSPM_ENUM_ROOT_PARAM, [str(prm_cfg[1]).upper() for prm_cfg in item_prm_a],
+        if valid_item_prm_a != []:
+            enum_prm = cls.code_gen.make_enum_from_variable(APPSPM_ENUM_ROOT_PARAM, [str(prm_cfg[1]).upper() for prm_cfg in valid_item_prm_a],
                                                             't_eAPPSPM_ItemPrm', 0, 'Enum for listong every parameter',
                                                             [])
         else : 
@@ -79,7 +87,7 @@ class AppSpm_CodeGen():
         var_prm += "    ///@brief Variable for System Parameter Inforamtion\n" \
                     + f"    const t_sAPPSPM_ItemPrmCfg c_AppSpm_ItemPrmInfo_as[{APPSPM_ENUM_ROOT_PARAM}_NB] =" + "{\n"
         var_prm += '    //version_u8                   minItemVal_u16                maxItemVal_u16                 DefaultItemVal_u16\n'
-        for item_cfg in item_prm_a:
+        for item_cfg in valid_item_prm_a:
             if item_cfg[9] is None:
                 signal_related = "APPSIG_SIGNAL_NB"
             else: 

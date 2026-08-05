@@ -54,10 +54,23 @@ class AppAct_CodeGen():
     @classmethod
     def code_generation(cls, f_software_cfg, f_udscfg_path , f_is_uds_ope = False) -> None:
         
-        # Load needed excel arrays
-        cls.code_gen.load_excel_file(f_software_cfg)
-        act_interface_cfg_a = cls.code_gen.get_array_from_excel("AppAct_ActInterface")[1:]
-        drivers_cfg_a = cls.code_gen.get_array_from_excel("AppAct_DriverList")[1:]
+        act_interface_raw_a = None
+        drivers_raw_a = None
+        appsys_opt_raw_a = None
+        if isinstance(f_software_cfg, str) and os.path.isfile(f_software_cfg) and os.path.getsize(f_software_cfg) > 0:
+            try:
+                cls.code_gen.load_excel_file(f_software_cfg)
+                act_interface_raw_a = cls.code_gen.get_array_from_excel("AppAct_ActInterface")
+                drivers_raw_a = cls.code_gen.get_array_from_excel("AppAct_DriverList")
+                appsys_opt_raw_a = cls.code_gen.get_array_from_excel("APPSYS_SysOptListEnum")
+            except Exception as exc:
+                print(f"[WARNING] : APPACT_Codegen -> invalid or unreadable config file '{f_software_cfg}', generate minimal code ({exc})")
+        else:
+            print(f"[WARNING] : APPACT_Codegen -> config file missing or empty '{f_software_cfg}', generate minimal code")
+
+        act_interface_cfg_a = act_interface_raw_a[1:] if act_interface_raw_a is not None else []
+        drivers_cfg_a = drivers_raw_a[1:] if drivers_raw_a is not None else []
+        appsys_opt_cfg_a = appsys_opt_raw_a[1:] if appsys_opt_raw_a is not None else []
         # make python varaible 
         enum_act = ""
         enum_drv = ""
@@ -69,23 +82,34 @@ class AppAct_CodeGen():
         var_unities = ""
         uds_act_data = {}
         uds_act_data["SENSORS"] = {}
+        valid_act_interface_cfg_a = [act_cfg for act_cfg in act_interface_cfg_a if act_cfg and len(act_cfg) > 1 and act_cfg[0] not in (None, 'None', '') and act_cfg[1] not in (None, 'None', '')]
+        valid_drivers_cfg_a = [drv_cfg for drv_cfg in drivers_cfg_a if drv_cfg and drv_cfg[0] not in (None, 'None', '')]
+        has_act_interface_b = valid_act_interface_cfg_a != []
+        has_driver_cfg_b = valid_drivers_cfg_a != []
+        act_opt_id_set = set()
+        for option_info in appsys_opt_cfg_a:
+            if not option_info or option_info[0] in (None, 'None', ''):
+                continue
+            option_name = str(option_info[0]).upper()
+            if option_name.startswith("ACT_"):
+                act_opt_id_set.add(option_name)
         #-----------------------------------------------------------------
         #-----------------------------make all enum-----------------------
         #-----------------------------------------------------------------
-        if str(act_interface_cfg_a[0][0]) is not None:
-            enum_act = cls.code_gen.make_enum_from_variable(ENUM_APPACT_ACTUATOR_RT, [f"{act_cfg[0]}_{act_cfg[1]}" for act_cfg in act_interface_cfg_a],
+        if has_act_interface_b:
+            enum_act = cls.code_gen.make_enum_from_variable(ENUM_APPACT_ACTUATOR_RT, [f"{act_cfg[0]}_{act_cfg[1]}" for act_cfg in valid_act_interface_cfg_a],
                                                             "t_eAPPACT_ActInterface", 0, "Enum for Actuators list",
-                                                            [f"Actuator Device {act_cfg[0]}, Interface {act_cfg[1]}, {act_cfg[-1]}"  for act_cfg in act_interface_cfg_a])
+                                                            [f"Actuator Device {act_cfg[0]}, Interface {act_cfg[1]}, {act_cfg[-1]}"  for act_cfg in valid_act_interface_cfg_a])
         else:
             enum_act = cls.code_gen.make_enum_from_variable(ENUM_APPACT_ACTUATOR_RT, [],
                                                             "t_eAPPACT_ActInterface", 0, "Enum for Actuators Interface list",
                                                             [])
 
         
-        if str(drivers_cfg_a[0][0]) is not None:
-            enum_drv = cls.code_gen.make_enum_from_variable(ENUM_APPACT_DRV_RT, [str(drv_cfg[0]).upper() for drv_cfg in drivers_cfg_a],
+        if has_driver_cfg_b:
+            enum_drv = cls.code_gen.make_enum_from_variable(ENUM_APPACT_DRV_RT, [str(drv_cfg[0]).upper() for drv_cfg in valid_drivers_cfg_a],
                                                         "t_eAPPACT_ActDriverList", 0, "Enum for Actuators drivers list",
-                                                        [str(drv_cfg[-1])  for drv_cfg in drivers_cfg_a])
+                                                        [str(drv_cfg[-1])  for drv_cfg in valid_drivers_cfg_a])
         else:
             enum_drv = cls.code_gen.make_enum_from_variable(ENUM_APPACT_DRV_RT, [],
                                                         "t_eAPPACT_ActDriverList", 0, "Enum for Actuators drivers list",
@@ -101,6 +125,10 @@ class AppAct_CodeGen():
                     + "    const t_sAPPACT_ActDvcOpeCfg c_AppAct_ActDvcOpeCfg_as[APPACT_ACTDVC_NB] = {\n"
         act_dvc_list = []
         for idx, act_cfg in enumerate(act_interface_cfg_a):
+            if not act_cfg or len(act_cfg) <= 1 or act_cfg[0] in (None, 'None', '') or act_cfg[1] in (None, 'None', ''):
+                continue
+            while len(act_cfg) <= 4:
+                act_cfg.append(None)
             # replace deebug signal with default if not use by user
             if act_cfg[2] == None or act_cfg[2] == 'None':
                 act_cfg[2] = 'NB'
@@ -116,35 +144,32 @@ class AppAct_CodeGen():
             if len(act_cfg[4]) > 32:
                 raise ValueError(f'{act_cfg[4]} is to long to be open in PCAN Symbol,  get {len(act_cfg[4])} expect less than 32')
             
-            if str(act_cfg[0]) is not None:
-                # make var sensors
-                var_act_if += "        {" \
-                            + f"APPACT_ACTDVC_{act_cfg[0]},"\
-                            + " " * ((SPACE_VARIABLE * 2) - len(f"APPACT_ACTDVC_{act_cfg[0]}")) \
-                            + f"{VAR_APPACT_SPEC}_{act_cfg[0]}_{act_cfg[1]}_SetValue," \
-                            + " " * ((SPACE_VARIABLE * 2) - len(f"{VAR_APPACT_SPEC}_{act_cfg[0]}_{act_cfg[1]}_SetValue,")) \
-                            + f"{VAR_APPACT_SPEC}_{act_cfg[0]}_{act_cfg[1]}_GetValue,"\
-                            + " " * ((SPACE_VARIABLE * 2) - len(f"{VAR_APPACT_SPEC}_{act_cfg[0]}_{act_cfg[1]}_GetValue,"))\
-                            + f"APPSIG_SIGNAL_{act_cfg[2]},"\
-                            + " " * ((SPACE_VARIABLE * 2) - len(f"APPSIG_SIGNAL_{act_cfg[2]}"))\
-                            + f"APPSIG_SIGNAL_{act_cfg[3]},"\
-                            + " " * ((SPACE_VARIABLE * 2) - len(f"APPSIG_SIGNAL_{act_cfg[3]}"))\
-                            + f"APPSIG_SIGNAL_{act_cfg[4]}"\
-                            + "},"\
-                            + "//" + f"{ENUM_APPACT_ACTUATOR_RT}_{act_cfg[0]}_{act_cfg[1]}\n"
-                              # make var unities
-                # make include 
-                include_act += f'    #include "{ACT_SPEC_FOLDER_PATH}/{VAR_APPACT_SPEC}_{act_cfg[0]}.h"\n'
-                # make header/src file if needed
-                if not os.path.isfile(f"{ACT_SPEC_FOLDER_FULLPATH}/{VAR_APPACT_SPEC}_{act_cfg[0]}.h"):
-                    if act_cfg[0] not in act_dvc_list:
-                        print(f"Couldn't find reference for {act_cfg[0]}")
-                        cls.make_header_src_file(act_interface_cfg_a, str(act_cfg[0]))
-                else:
-                    print(f"Header/Source file for {act_cfg[0]} already existing")
-
+            # make var actuators
+            var_act_if += "        {" \
+                        + f"APPACT_ACTDVC_{act_cfg[0]},"\
+                        + " " * ((SPACE_VARIABLE * 2) - len(f"APPACT_ACTDVC_{act_cfg[0]}")) \
+                        + f"{VAR_APPACT_SPEC}_{act_cfg[0]}_{act_cfg[1]}_SetValue," \
+                        + " " * ((SPACE_VARIABLE * 2) - len(f"{VAR_APPACT_SPEC}_{act_cfg[0]}_{act_cfg[1]}_SetValue,")) \
+                        + f"{VAR_APPACT_SPEC}_{act_cfg[0]}_{act_cfg[1]}_GetValue,"\
+                        + " " * ((SPACE_VARIABLE * 2) - len(f"{VAR_APPACT_SPEC}_{act_cfg[0]}_{act_cfg[1]}_GetValue,"))\
+                        + f"APPSIG_SIGNAL_{act_cfg[2]},"\
+                        + " " * ((SPACE_VARIABLE * 2) - len(f"APPSIG_SIGNAL_{act_cfg[2]}"))\
+                        + f"APPSIG_SIGNAL_{act_cfg[3]},"\
+                        + " " * ((SPACE_VARIABLE * 2) - len(f"APPSIG_SIGNAL_{act_cfg[3]}"))\
+                        + f"APPSIG_SIGNAL_{act_cfg[4]}"\
+                        + "},"\
+                        + "//" + f"{ENUM_APPACT_ACTUATOR_RT}_{act_cfg[0]}_{act_cfg[1]}\n"
+            include_act += f'    #include "{ACT_SPEC_FOLDER_PATH}/{VAR_APPACT_SPEC}_{act_cfg[0]}.h"\n'
+            if not os.path.isfile(f"{ACT_SPEC_FOLDER_FULLPATH}/{VAR_APPACT_SPEC}_{act_cfg[0]}.h"):
                 if act_cfg[0] not in act_dvc_list:
-                    act_dvc_list.append(act_cfg[0])
+                    print(f"Couldn't find reference for {act_cfg[0]}")
+                    cls.make_header_src_file(valid_act_interface_cfg_a, str(act_cfg[0]))
+            else:
+                print(f"Header/Source file for {act_cfg[0]} already existing")
+
+            if act_cfg[0] not in act_dvc_list:
+                act_dvc_list.append(act_cfg[0])
+                if f"ACT_{str(act_cfg[0]).upper()}" in act_opt_id_set:
                     var_act_dvc += '        {'\
                                 + f'APPSYS_OPT_ID_ACT_{act_cfg[0]},'\
                                 + " " * ((SPACE_VARIABLE * 2) - len(f"APPSYS_OPT_ID_ACT_{act_cfg[0]}"))\
@@ -152,12 +177,11 @@ class AppAct_CodeGen():
                                 + '},'\
                                 + " " * ((SPACE_VARIABLE * 2) - len(f'{VAR_APPACT_SPEC}_{act_cfg[0]}_SetCfg'))\
                                 + f' // APPACT_ACTDVC_{act_cfg[0]}\n'
-                # uds cfg 
-                if f_is_uds_ope:
-                    uds_act_data["SENSORS"][str(act_cfg[0]).upper()] = {
-                            'id' : f'{idx}',
-                            'description' : f'{act_cfg[-1]}'
-                    }
+            if f_is_uds_ope:
+                uds_act_data["SENSORS"][str(act_cfg[0]).upper()] = {
+                        'id' : f'{idx}',
+                        'description' : f'{act_cfg[-1]}'
+                }
 
         var_act_dvc += '    };\n\n'
         var_act_if_state += "};\n\n"
@@ -183,7 +207,9 @@ class AppAct_CodeGen():
         var_drv_state += "/**< Variable for Actuators Drivers State*/\n"
         var_drv_state += "t_eAPPACT_DrvState g_ActDrvState_ae[APPACT_DRV_NB] = {\n"
         for drv_cfg in drivers_cfg_a:
-            if str(drv_cfg[0]) is not None:
+            if drv_cfg[0] not in (None, 'None', ''):
+                while len(drv_cfg) <= 3:
+                    drv_cfg.append(None)
                 var_drv += "        {" 
                 if "Yes" in str(drv_cfg[1]):
                     var_drv += f"(t_cbAppAct_DrvInit *){drv_cfg[0]}_Init,"
