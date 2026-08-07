@@ -31,6 +31,7 @@ from FMK_CodeGen.FMKCPU_CodeGen     import FMKCPU_CodeGen as FMKCPU
 from FMK_CodeGen.FMKSRL_CodeGen     import FMKSRL_CodeGen as FMKSRL
 from FMK_CodeGen.FMKHRT_CodeGen     import FMKHRT_CodeGen as FMKHRT
 from FMK_CodeGen.FMKFDCAN_CodeGen   import FMKFDCAN_CodeGen as FMKFDCAN
+from FMK_CodeGen.FMKNVM_CodeGen     import FMKNVM_CodeGen as FMKNVM
 
 from App_CodeGen.AppSns_CodeGen     import AppSns_CodeGen as APPSNS
 from App_CodeGen.AppAct_CodeGen     import AppAct_CodeGen as APPACT
@@ -79,6 +80,7 @@ def main()-> None:
     FMKCDA.code_genration(hardware_cfg_path)
     FMKSRL.code_genration(hardware_cfg_path)
     FMKFDCAN.code_genration(hardware_cfg_path)
+    FMKNVM.code_generation(hardware_cfg_path)
     FMKIO.code_generation(hardware_cfg_path)
 
     #--- create Json file for Uds Configuration with the version ---# 
