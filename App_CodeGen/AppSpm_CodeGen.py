@@ -423,7 +423,10 @@ class AppSpm_CodeGen():
 
             if prm_type.lower() not in APPSPM_SCALAR_C_TYPES:
 
-                prm_type = f"{prm_size}_{prm_type.upper()[2:]}"
+                if prm_type == "T_CHAR": # string
+                    prm_type = f"{prm_size}_{prm_type[2:]}"
+                elif "T_S" in prm_type: # structure
+                    prm_type = f"STRUCT_{prm_type[3:]}"
 
                 if prm_type not in list_prm_type:
                     list_prm_type.append(prm_type)
